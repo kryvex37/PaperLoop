@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Sign in · PaperLoop{% endblock %}
+{% block body_class %}signin-body{% endblock %}
+{% block content %}
+<section class="signin-page" aria-labelledby="signin-title">
+  <aside class="signin-story" aria-label="About PaperLoop">
+    <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="true" aria-label="Pause ambient motion">
+      <span class="motion-indicator" aria-hidden="true"></span>
+      <span data-motion-label>Pause motion</span>
+    </button>
+    <div class="story-heading">
+      <span class="story-kicker"><span class="story-kicker-dot"></span> A better loop for paper</span>
+      <h1>Good things<br><span>come full circle.</span></h1>
+      <p>Bring your institution and recycling partners together in one clear place.</p>
+    </div>
+
+    <div class="loop-visual" aria-hidden="true">
+      <div class="paper-sheet paper-sheet-back"></div>
+      <div class="paper-sheet paper-sheet-front"></div>
+      <div class="loop-ring loop-ring-outer"></div>
+      <div class="loop-ring loop-ring-inner"></div>
+      <div class="loop-center">
+        <svg viewBox="0 0 48 48" fill="none">
+          <path d="M13 8h15l8 8v23H13a3 3 0 0 1-3-3V11a3 3 0 0 1 3-3Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M28 8v9h8M17 25h14M17 31h10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="m20 18 3 3 3-3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="orbit-card orbit-institution">
+        <span class="orbit-icon orbit-icon-school">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m3 9 9-5 9 5-9 5-9-5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 11v5c3.4 2.8 8.6 2.8 12 0v-5M21 9v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </span>
+        <span><strong>Institutions</strong><small>Paper ready to collect</small></span>
+      </div>
+      <div class="orbit-card orbit-partner">
+        <span class="orbit-icon orbit-icon-recycle">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m8 5 2-2 2 2M10 3v4l-3 5M5 12H3l2-3M5 12l3 2M15 5l2 1 1 3M17 6l-3 2 2 5M18 14l1 2-2 2M19 16h-4l-3-5M7 18l-2 1-2-2M5 19l1-4 4-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span><strong>Partners</strong><small>Collection in motion</small></span>
+      </div>
+      <span class="orbit-dot orbit-dot-one"></span>
+      <span class="orbit-dot orbit-dot-two"></span>
+      <span class="orbit-dot orbit-dot-three"></span>
+    </div>
+
+    <div class="story-footer">
+      <span class="story-footer-mark">P</span>
+      <span>PaperLoop <small>Bulk paper, better connected.</small></span>
+    </div>
+  </aside>
+
+  <div class="signin-main">
+    <div class="signin-card">
+      <div class="signin-card-brand" aria-hidden="true">
+        <span class="brand-mark">P</span>
+        <span>PaperLoop</span>
+      </div>
+
+      <p class="signin-eyebrow">Your workspace awaits</p>
+      <h2 id="signin-title">Welcome back</h2>
+      <p class="signin-subtitle">Sign in to manage your PaperLoop account.</p>
+
+      {% if form.non_field_errors %}
+        <div class="signin-error" role="alert">
+          <span class="error-symbol" aria-hidden="true">!</span>
+          <span>Email or password didn't match. Please try again.</span>
+        </div>
+      {% endif %}
+
+      <form method="post" class="signin-form">
+        {% csrf_token %}
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+        <div class="signin-field">
+          <label for="{{ form.username.id_for_label }}">Email address</label>
+          <div class="input-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3.5" y="5" width="17" height="14" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="m5 7 7 5 7-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {{ form.username }}
+          </div>
+          {% for error in form.username.errors %}<small class="signin-field-error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <div class="signin-field">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          <div class="input-wrap">
+            <svg class="field-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            {{ form.password }}
+          </div>
+          {% for error in form.password.errors %}<small class="signin-field-error">{{ error }}</small>{% endfor %}
+        </div>
+
+        <button class="signin-submit" type="submit">
+          <span>Sign in</span>
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </form>
+
+      <div class="signin-divider"><span>New to PaperLoop?</span></div>
+      <a class="create-account-link" href="{% url 'accounts:register' %}">Create an organization account</a>
+      <p class="signin-assurance">
+        <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M10 2.5 16 5v4.3c0 3.7-2.5 6.5-6 8.2-3.5-1.7-6-4.5-6-8.2V5l6-2.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="m7.5 9.8 1.7 1.7 3.5-3.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Your account is protected with secure sign-in
+      </p>
+    </div>
+    <p class="signin-copyright">© PaperLoop · Connecting education to circularity</p>
+  </div>
+</section>
+<script>
+  (() => {
+    const page = document.querySelector(".signin-page");
+    const toggle = document.querySelector("[data-motion-toggle]");
+    const label = toggle && toggle.querySelector("[data-motion-label]");
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (!page || !toggle || !label) return;
+
+    const setMotion = (enabled) => {
+      page.classList.toggle("motion-enabled", enabled);
+      page.classList.toggle("motion-paused", !enabled && !preference.matches);
+      toggle.setAttribute("aria-pressed", String(enabled));
+      toggle.setAttribute("aria-label", enabled ? "Pause ambient motion" : "Play ambient motion");
+      label.textContent = enabled ? "Pause motion" : "Play motion";
+    };
+
+    setMotion(!preference.matches);
+    toggle.addEventListener("click", () => {
+      setMotion(!page.classList.contains("motion-enabled") || page.classList.contains("motion-paused"));
+    });
+    const onPreferenceChange = (event) => setMotion(!event.matches);
+    if (preference.addEventListener) {
+      preference.addEventListener("change", onPreferenceChange);
+    } else {
+      preference.addListener(onPreferenceChange);
+    }
+  })();
+</script>
+{% endblock %}

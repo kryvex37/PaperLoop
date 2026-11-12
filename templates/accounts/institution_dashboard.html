@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Institution dashboard · PaperLoop{% endblock %}
+{% block content %}
+<section class="dashboard-card">
+  <p class="eyebrow">Educational institution</p>
+  <h1>Welcome, {{ user.organization_name }}</h1>
+  <p>Your institution account is ready. PaperLoop will give this workspace institution-specific tools for paper listings, collection requests, and recycling records.</p>
+  <div class="status-panel"><strong>Account type</strong><span>{{ user.get_role_display }}</span></div>
+  <p class="muted">This is the FR-01 account and access foundation. Listing and collection features will be added in their respective requirements.</p>
+</section>
+{% endblock %}

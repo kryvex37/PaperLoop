@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Create an account · PaperLoop{% endblock %}
+{% block content %}
+<section class="auth-layout">
+  <div class="auth-intro">
+    <p class="eyebrow">Join the PaperLoop network</p>
+    <h1>Make bulk paper recycling easier to organize.</h1>
+    <p>Create an organization account to connect with institutions and recycling or collection partners.</p>
+    <ul class="benefit-list">
+      <li>Keep paper collection work in one place</li>
+      <li>Coordinate with the right organization type</li>
+      <li>Build a dependable record of recycling activity</li>
+    </ul>
+  </div>
+
+  <div class="form-card">
+    <h2>Create your account</h2>
+    <p class="muted">Register your organization with PaperLoop.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% if form.non_field_errors %}<div class="form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
+      {% for field in form %}
+        <div class="field-group">
+          <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}<small class="help-text">{{ field.help_text }}</small>{% endif %}
+          {% for error in field.errors %}<small class="field-error" role="alert">{{ error }}</small>{% endfor %}
+        </div>
+      {% endfor %}
+      <button class="button button-primary button-full" type="submit">Create account</button>
+    </form>
+    <p class="form-footnote">Already registered? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+  </div>
+</section>
+{% endblock %}

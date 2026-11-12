@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Partner dashboard · PaperLoop{% endblock %}
+{% block content %}
+<section class="dashboard-card">
+  <p class="eyebrow">Recycling/collection partner</p>
+  <h1>Welcome, {{ user.organization_name }}</h1>
+  <p>Your partner account is ready. PaperLoop will give this workspace partner-specific tools for accepted paper categories, collection capacity, and suitable opportunities.</p>
+  <div class="status-panel"><strong>Account type</strong><span>{{ user.get_role_display }}</span></div>
+  <p class="muted">This is the FR-01 account and access foundation. Recycler profiles and collection workflows will be added in their respective requirements.</p>
+</section>
+{% endblock %}
