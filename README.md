@@ -18,13 +18,30 @@ Organization verification and activation are intentionally separate and belong t
 
 1. Create and activate a virtual environment.
 2. Install dependencies: `python -m pip install -r requirements.txt`.
-3. Copy `.env.example` to `.env` and provide a strong `DJANGO_SECRET_KEY` for any shared environment. Export the variables in your shell; Django does not load `.env` files automatically.
+3. Copy `.env.example` to `.env` and set the values you need. The project loads this local file automatically; operating-system environment variables take precedence. Keep `.env` private and use a strong `DJANGO_SECRET_KEY` outside local development.
 4. Apply migrations: `python manage.py migrate`.
 5. Create a platform administrator: `python manage.py createsuperuser`.
 6. Start the development server: `python manage.py runserver`.
 7. Open `/accounts/register/` to register an institution or partner, `/accounts/login/` to sign in, or `/admin/` for the Django administration site.
 
-When `DB_NAME` is set, the app uses PostgreSQL and reads `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_PORT`. With `DB_NAME` unset, it uses the local SQLite database.
+Set `DATABASE_URL` to a PostgreSQL connection string, or set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, and optional `DB_SSLMODE`. A URL can include `?sslmode=require` when your database provider requires TLS. If `DATABASE_URL` and `DB_NAME` are both empty, the app uses local SQLite.
+
+### Project-local PostgreSQL server
+
+This workspace has a PostgreSQL 18.6 development server and database in the ignored `.local/` directory. Its connection settings and generated development credentials are in the ignored `.env` file. Keep both directories private; neither is committed to Git.
+
+Start PostgreSQL from PowerShell before starting Django:
+
+```powershell
+.\.local\pgsql\bin\pg_ctl.exe --pgdata=".local/postgres-data" --log=".local/postgres-server.log" --options="-h 127.0.0.1 -p 5432" --wait --timeout=30 start
+python manage.py runserver 127.0.0.1:8000
+```
+
+Stop PostgreSQL when you are finished:
+
+```powershell
+.\.local\pgsql\bin\pg_ctl.exe --pgdata=".local/postgres-data" --mode=fast stop
+```
 
 ## Security and scope notes
 
