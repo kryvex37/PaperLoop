@@ -1,9 +1,45 @@
 """Settings for the PaperLoop Django application."""
 import os
 from pathlib import Path
+from urllib.parse import parse_qs, unquote, urlparse
+
+from django.core.exceptions import ImproperlyConfigured
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def load_local_env(path):
+    """Load simple KEY=VALUE settings from the ignored local .env file."""
+    if not path.is_file():
+        return
+    for raw_line in path.read_text(encoding="utf-8-sig").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[7:].lstrip()
+        key, separator, value = line.partition("=")
+        key = key.strip()
+        if not separator or not key or key in os.environ:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        elif " #" in value:
+            value = value.split(" #", 1)[0].rstrip()
+        os.environ[key] = value
+
+
+load_local_env(BASE_DIR / ".env")
+
+# The project-local Windows PostgreSQL package includes libpq. Keep its DLL
+# directory registered so the pure-Python Psycopg wrapper can find it.
+if os.name == "nt":
+    local_postgres_bin = BASE_DIR / ".local" / "pgsql" / "bin"
+    if local_postgres_bin.is_dir():
+        _local_postgres_dll_directory = os.add_dll_directory(str(local_postgres_bin))
+        os.environ["PATH"] = str(local_postgres_bin) + os.pathsep + os.environ.get("PATH", "")
 
 
 def env_bool(name, default=False):
@@ -58,7 +94,34 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-if os.environ.get("DB_NAME"):
+database_url = os.environ.get("DATABASE_URL", "").strip()
+if database_url:
+    parsed_database_url = urlparse(database_url)
+    if parsed_database_url.scheme not in {"postgres", "postgresql"}:
+        raise ImproperlyConfigured("DATABASE_URL must use the postgres:// or postgresql:// scheme.")
+    database_name = unquote(parsed_database_url.path.lstrip("/"))
+    if not parsed_database_url.hostname or not database_name:
+        raise ImproperlyConfigured("DATABASE_URL must include a host and database name.")
+    query = parse_qs(parsed_database_url.query)
+    database_options = {}
+    if query.get("sslmode"):
+        database_options["sslmode"] = query["sslmode"][0]
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": database_name,
+            "USER": unquote(parsed_database_url.username or ""),
+            "PASSWORD": unquote(parsed_database_url.password or ""),
+            "HOST": parsed_database_url.hostname,
+            "PORT": str(parsed_database_url.port or 5432),
+            "CONN_MAX_AGE": 60,
+            "OPTIONS": database_options,
+        }
+    }
+elif os.environ.get("DB_NAME"):
+    database_options = {}
+    if os.environ.get("DB_SSLMODE"):
+        database_options["sslmode"] = os.environ["DB_SSLMODE"]
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql",
@@ -68,6 +131,7 @@ if os.environ.get("DB_NAME"):
             "HOST": os.environ.get("DB_HOST", "127.0.0.1"),
             "PORT": os.environ.get("DB_PORT", "5432"),
             "CONN_MAX_AGE": 60,
+            "OPTIONS": database_options,
         }
     }
 else:

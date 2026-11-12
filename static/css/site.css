@@ -423,3 +423,471 @@ body.signin-body .page-shell { display: flex; padding-top: 28px; padding-bottom:
   .create-account-link { min-height: 40px; }
   .signin-assurance, .signin-copyright { margin-top: 12px; }
 }
+
+/* Refreshed auth backdrop and registration layout. */
+body.signin-body, body.register-body {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  background: #eaf2ec;
+}
+body.signin-body::before, body.register-body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(151, 206, 166, .34), transparent 29rem),
+    radial-gradient(ellipse at 88% 80%, rgba(131, 184, 148, .27), transparent 33rem),
+    radial-gradient(ellipse at 75% 8%, rgba(246, 255, 248, .9), transparent 30rem),
+    linear-gradient(135deg, #edf5ef 0%, #e5efe7 52%, #f2f7f1 100%);
+}
+body.signin-body::after, body.register-body::after {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  pointer-events: none;
+  opacity: .2;
+  background-image: radial-gradient(rgba(24, 83, 54, .22) .7px, transparent .7px);
+  background-size: 20px 20px;
+  mask-image: linear-gradient(135deg, #000 0%, transparent 65%);
+}
+.signin-body .site-header, .register-body .site-header {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, .76);
+  backdrop-filter: blur(16px);
+}
+.signin-body .site-footer, .register-body .site-footer {
+  position: relative;
+  z-index: 1;
+  background: rgba(255, 255, 255, .42);
+  border-color: rgba(130, 163, 139, .28);
+}
+.signin-body .page-shell, .register-body .page-shell { position: relative; z-index: 0; }
+.signin-body .signin-page {
+  border-color: rgba(191, 213, 196, .9);
+  box-shadow: 0 30px 90px rgba(25, 74, 48, .14), 0 4px 14px rgba(25, 74, 48, .05);
+}
+.signin-body .signin-main { background: linear-gradient(145deg, rgba(246, 251, 246, .97), rgba(232, 243, 233, .96)); }
+
+.register-body .page-shell {
+  width: min(1120px, calc(100% - 48px));
+  min-height: calc(100vh - 126px);
+  min-height: calc(100svh - 126px);
+  display: flex;
+  align-items: center;
+  padding-block: clamp(28px, 6vh, 68px);
+}
+.register-body .auth-layout {
+  width: 100%;
+  grid-template-columns: minmax(0, 1.03fr) minmax(360px, .97fr);
+  gap: clamp(32px, 6vw, 76px);
+}
+.register-body .auth-intro {
+  position: relative;
+  max-width: none;
+  overflow: hidden;
+  padding: clamp(32px, 5vw, 58px);
+  color: #f4fff7;
+  border: 1px solid rgba(206, 235, 214, .18);
+  border-radius: 28px;
+  background: radial-gradient(ellipse at 82% 75%, rgba(82, 167, 113, .38), transparent 42%), linear-gradient(145deg, #164d38 0%, #103b2d 58%, #0b3024 100%);
+  box-shadow: 0 28px 70px rgba(16, 66, 42, .2);
+}
+.register-body .auth-intro::after {
+  position: absolute;
+  right: -130px;
+  bottom: -220px;
+  width: 420px;
+  aspect-ratio: 1;
+  content: "";
+  border: 1px solid rgba(218, 255, 227, .15);
+  border-radius: 50%;
+  box-shadow: 0 0 0 34px rgba(218, 255, 227, .035), 0 0 0 70px rgba(218, 255, 227, .025);
+  pointer-events: none;
+}
+.register-body .auth-intro > * { position: relative; z-index: 1; }
+.register-body .auth-intro .eyebrow { color: #aee0bd; }
+.register-body .auth-intro h1 { font-size: clamp(2.5rem, 4.6vw, 4.1rem); }
+.register-body .auth-intro > p:not(.eyebrow), .register-body .benefit-list { color: #c9dfcf; }
+.register-body .benefit-list { list-style: none; padding: 0; }
+.register-body .benefit-list li { display: flex; align-items: flex-start; gap: 12px; margin: 14px 0; }
+.register-body .benefit-list li::before {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 22px;
+  place-items: center;
+  content: "✓";
+  color: #bce8c8;
+  border: 1px solid rgba(188, 232, 200, .28);
+  border-radius: 50%;
+  background: rgba(188, 232, 200, .1);
+  font-size: .75rem;
+  font-weight: 800;
+}
+.register-body .form-card {
+  width: 100%;
+  padding: clamp(26px, 4vw, 42px);
+  border-color: rgba(196, 215, 199, .8);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 24px 65px rgba(25, 74, 48, .12);
+  backdrop-filter: blur(16px);
+}
+.register-body .field-group input, .register-body .field-group select { min-height: 50px; border-radius: 11px; }
+.register-body .button-primary { background: linear-gradient(105deg, #28865c, #176747); box-shadow: 0 10px 22px rgba(24, 116, 81, .18); }
+.register-body .button-primary:hover { background: linear-gradient(105deg, #20774f, #105a3e); }
+
+@media (max-width: 760px) {
+  .register-body .page-shell { width: min(100% - 28px, 560px); min-height: auto; padding-block: 26px 38px; }
+  .register-body .auth-layout { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .register-body .auth-intro { padding: 28px 25px; border-radius: 21px; }
+  .register-body .auth-intro h1 { max-width: 570px; font-size: clamp(2rem, 8vw, 3rem); }
+  .register-body .auth-intro > p:not(.eyebrow) { font-size: .96rem; }
+  .register-body .benefit-list { margin: 18px 0 0; }
+  .register-body .benefit-list li { margin: 10px 0; font-size: .9rem; }
+  .register-body .form-card { padding: clamp(23px, 6vw, 34px); border-radius: 21px; }
+}
+@media (max-width: 420px) {
+  .register-body .page-shell { width: calc(100% - 20px); padding-block: 18px 28px; }
+  .register-body .auth-layout { gap: 12px; }
+  .register-body .auth-intro { padding: 23px 19px; }
+  .register-body .auth-intro h1 { font-size: clamp(1.85rem, 8.4vw, 2.25rem); }
+  .register-body .form-card { padding: 22px 18px; }
+  .register-body .field-group { margin: 14px 0; }
+}
+
+/* Cinematic 3D paper-loop centerpiece, inspired by the supplied reference. */
+.signin-body .signin-story {
+  background:
+    radial-gradient(ellipse at 56% 64%, rgba(48, 154, 99, .42), transparent 34%),
+    radial-gradient(ellipse at 88% 15%, rgba(59, 132, 94, .23), transparent 36%),
+    radial-gradient(circle at 50% 52%, rgba(215, 255, 226, .07) 1px, transparent 1.5px),
+    linear-gradient(145deg, #071b16 0%, #0b2b20 48%, #103b2a 100%);
+  background-size: auto, auto, 36px 36px, 160% 160%;
+}
+.signin-body .loop-visual {
+  perspective: 1050px;
+  transform-style: preserve-3d;
+  --scene-tilt-x: 0deg;
+  --scene-tilt-y: 0deg;
+}
+.signin-body .loop-ring {
+  transform-style: preserve-3d;
+  box-shadow: 0 0 24px rgba(112, 231, 151, .06), inset 0 0 20px rgba(112, 231, 151, .035);
+}
+.signin-body .loop-ring-outer { animation: paperloop-ring-breathe 7s ease-in-out infinite; }
+.signin-body .loop-ring-inner { animation: paperloop-ring-spin 25s linear infinite; }
+.signin-body .loop-center {
+  transform-style: preserve-3d;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, .42), 0 0 35px rgba(95, 222, 139, .16), inset 0 1px 0 rgba(255, 255, 255, .25);
+  animation: paperloop-core-float 6s ease-in-out infinite;
+}
+.signin-body .loop-center::before {
+  position: absolute;
+  inset: 6px;
+  content: "";
+  border: 1px solid rgba(225, 255, 234, .25);
+  border-radius: 22px;
+  box-shadow: inset 0 0 22px rgba(152, 255, 180, .12);
+  transform: translateZ(10px);
+  pointer-events: none;
+}
+.signin-body .paper-sheet {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  box-shadow: 0 28px 48px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .88);
+}
+.signin-body .paper-sheet-back { animation: paperloop-sheet-back 8s ease-in-out infinite; }
+.signin-body .paper-sheet-front { animation: paperloop-sheet-front 9.5s ease-in-out infinite; }
+.signin-body .orbit-card { transform-style: preserve-3d; box-shadow: 0 18px 42px rgba(0, 0, 0, .28), inset 0 1px 0 rgba(255, 255, 255, .08); }
+.signin-body .orbit-institution { animation: paperloop-card-up 7s ease-in-out infinite; }
+.signin-body .orbit-partner { animation: paperloop-card-down 8s ease-in-out infinite; }
+
+@keyframes paperloop-ring-breathe {
+  0%, 100% { opacity: .76; transform: translate(-50%, -50%) rotateX(calc(66deg + var(--scene-tilt-x))) rotateY(var(--scene-tilt-y)) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) rotateX(calc(66deg + var(--scene-tilt-x))) rotateY(var(--scene-tilt-y)) scale(1.08); }
+}
+@keyframes paperloop-ring-spin {
+  from { transform: translate(-50%, -50%) rotateX(calc(72deg + var(--scene-tilt-x))) rotateY(var(--scene-tilt-y)) rotateZ(0deg); }
+  to { transform: translate(-50%, -50%) rotateX(calc(72deg + var(--scene-tilt-x))) rotateY(var(--scene-tilt-y)) rotateZ(360deg); }
+}
+@keyframes paperloop-core-float {
+  0%, 100% { transform: translate3d(-50%, -50%, 24px) rotateX(calc(11deg + var(--scene-tilt-x))) rotateY(calc(-14deg + var(--scene-tilt-y))) rotateZ(-4deg); }
+  50% { transform: translate3d(-50%, calc(-50% - 8px), 35px) rotateX(calc(8deg + var(--scene-tilt-x))) rotateY(calc(-9deg + var(--scene-tilt-y))) rotateZ(-1deg); }
+}
+@keyframes paperloop-sheet-back {
+  0%, 100% { transform: translate3d(-50%, 0, -18px) rotateX(8deg) rotateY(-17deg) rotateZ(-23deg); }
+  50% { transform: translate3d(calc(-50% - 4px), -9px, 4px) rotateX(8deg) rotateY(-21deg) rotateZ(-19deg); }
+}
+@keyframes paperloop-sheet-front {
+  0%, 100% { transform: translate3d(-50%, 0, 15px) rotateX(-4deg) rotateY(12deg) rotateZ(16deg); }
+  50% { transform: translate3d(calc(-50% + 5px), 8px, 29px) rotateX(-2deg) rotateY(17deg) rotateZ(20deg); }
+}
+@keyframes paperloop-card-up {
+  0%, 100% { transform: translate3d(0, 0, 24px); }
+  50% { transform: translate3d(0, -6px, 40px); }
+}
+@keyframes paperloop-card-down {
+  0%, 100% { transform: translate3d(0, 0, 26px); }
+  50% { transform: translate3d(0, 6px, 42px); }
+}
+
+.register-body .auth-intro { perspective: 950px; }
+.register-body .auth-intro::after {
+  transform-style: preserve-3d;
+  animation: paperloop-register-orbit 20s linear infinite;
+}
+@keyframes paperloop-register-orbit {
+  from { transform: rotateX(68deg) rotateZ(0deg); }
+  to { transform: rotateX(68deg) rotateZ(360deg); }
+}
+
+@media (max-width: 680px) {
+  .signin-body .loop-visual { perspective: 760px; }
+  .signin-body .loop-ring-outer { width: 190px; height: 190px; }
+  .signin-body .loop-ring-inner { width: 140px; height: 140px; }
+  .signin-body .paper-sheet { box-shadow: 0 18px 34px rgba(0, 0, 0, .32); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .register-body .auth-intro::after { animation: none; }
+}
+
+/* Make the PaperLoop 3D scene the clear visual focus of the sign-in panel. */
+.signin-body .signin-story {
+  background:
+    radial-gradient(ellipse at 53% 66%, rgba(50, 193, 112, .42), transparent 37%),
+    radial-gradient(ellipse at 82% 30%, rgba(80, 169, 117, .24), transparent 42%),
+    radial-gradient(circle at 50% 56%, rgba(202, 255, 217, .1) 1px, transparent 1.7px),
+    linear-gradient(145deg, #061710 0%, #09291d 48%, #12452e 100%);
+  background-size: auto, auto, 32px 32px, 160% 160%;
+}
+.signin-body .story-heading h1 {
+  max-width: 560px;
+  font-size: clamp(3.1rem, 5vw, 4.35rem);
+  letter-spacing: -.07em;
+}
+.signin-body .story-heading > p { max-width: 430px; font-size: 1.04rem; }
+.signin-body .loop-visual {
+  width: min(100%, 550px);
+  height: clamp(285px, 36vh, 350px);
+  margin: -4px 0 0;
+}
+.signin-body .loop-ring-outer { width: 310px; height: 310px; animation-duration: 5.2s; }
+.signin-body .loop-ring-inner { width: 254px; height: 254px; animation-duration: 16s; }
+.signin-body .loop-center {
+  width: 146px;
+  height: 146px;
+  border-radius: 43px;
+  background: linear-gradient(145deg, rgba(89, 202, 129, .88), rgba(17, 91, 57, .96));
+  animation-duration: 4.6s;
+}
+.signin-body .loop-center svg { width: 74px; height: 74px; }
+.signin-body .loop-center::before { inset: 8px; border-radius: 34px; }
+.signin-body .loop-center::after {
+  position: absolute;
+  inset: -13px;
+  content: "";
+  border: 1px solid rgba(181, 255, 201, .34);
+  border-radius: 50%;
+  box-shadow: 0 0 28px rgba(97, 241, 149, .2), inset 0 0 18px rgba(97, 241, 149, .1);
+  transform: translateZ(-18px);
+  pointer-events: none;
+}
+.signin-body .paper-sheet { width: 112px; height: 148px; border-radius: 15px; }
+.signin-body .paper-sheet::before { inset: 30px 20px auto; height: 3px; box-shadow: 0 14px 0 rgba(65, 125, 85, .2), 0 28px 0 rgba(65, 125, 85, .18), 0 42px 0 rgba(65, 125, 85, .13); }
+.signin-body .paper-sheet::after { width: 28px; height: 28px; }
+.signin-body .paper-sheet-back { animation-duration: 6.5s; }
+.signin-body .paper-sheet-front { animation-duration: 7.2s; }
+.signin-body .orbit-card { min-width: 205px; padding: 13px 15px; }
+.signin-body .orbit-institution { animation-duration: 5.2s; }
+.signin-body .orbit-partner { animation-duration: 6.1s; }
+.signin-body .orbit-dot { box-shadow: 0 0 14px rgba(127, 255, 170, .4); }
+.signin-body .orbit-dot-one { animation-duration: 2.2s; }
+.signin-body .orbit-dot-two { animation-duration: 2.8s; }
+.signin-body .orbit-dot-three { animation-duration: 2.5s; }
+
+@keyframes paperloop-ring-spin {
+  from { transform: translate(-50%, -50%) rotateX(calc(16deg + var(--scene-tilt-x))) rotateY(calc(48deg + var(--scene-tilt-y))) rotateZ(0deg); }
+  to { transform: translate(-50%, -50%) rotateX(calc(16deg + var(--scene-tilt-x))) rotateY(calc(48deg + var(--scene-tilt-y))) rotateZ(360deg); }
+}
+
+@media (min-width: 681px) and (max-width: 900px) {
+  .signin-body .story-heading h1 { font-size: clamp(2.65rem, 5vw, 3.35rem); }
+  .signin-body .loop-visual { width: min(100%, 430px); height: 290px; }
+  .signin-body .loop-ring-outer { width: 255px; height: 255px; }
+  .signin-body .loop-ring-inner { width: 210px; height: 210px; }
+  .signin-body .loop-center { width: 124px; height: 124px; border-radius: 37px; }
+  .signin-body .loop-center svg { width: 62px; height: 62px; }
+}
+@media (max-width: 680px) {
+  .signin-body .story-heading h1 { max-width: 90%; font-size: clamp(2.25rem, 9vw, 3rem); }
+  .signin-body .loop-visual { width: 270px; height: 220px; right: -54px; bottom: -35px; }
+  .signin-body .loop-ring-outer { width: 208px; height: 208px; }
+  .signin-body .loop-ring-inner { width: 168px; height: 168px; }
+  .signin-body .loop-center { width: 108px; height: 108px; border-radius: 34px; }
+  .signin-body .loop-center svg { width: 54px; height: 54px; }
+  .signin-body .paper-sheet { width: 82px; height: 110px; }
+  .signin-body .orbit-card { min-width: 165px; padding: 9px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .signin-body .signin-story { background-position: center; }
+}
+
+/* On phones, carry the existing animated forest backdrop behind the whole sign-in flow. */
+@media (max-width: 680px) {
+  html:has(body.signin-body) { min-height: 100%; background: #06271c; }
+  body.signin-body {
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow-x: clip;
+    color: #f3fff7;
+    background: #06271c;
+  }
+  body.signin-body::before {
+    position: fixed;
+    z-index: -2;
+    inset: 0;
+    content: "";
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse at 53% 38%, rgba(50, 193, 112, .38), transparent 38%),
+      radial-gradient(ellipse at 88% 12%, rgba(80, 169, 117, .2), transparent 42%),
+      radial-gradient(circle at 50% 48%, rgba(202, 255, 217, .085) 1px, transparent 1.7px),
+      linear-gradient(145deg, #061710 0%, #09291d 48%, #12452e 100%);
+    background-size: auto, auto, 32px 32px, 190% 190%;
+    background-position: center, center, center, 0% 35%;
+    animation: forest-light 18s ease-in-out infinite alternate;
+  }
+  body.signin-body::after {
+    z-index: -1;
+    opacity: .24;
+    background-image: radial-gradient(rgba(164, 255, 190, .4) .7px, transparent .8px);
+    background-size: 32px 32px;
+    mask-image: linear-gradient(180deg, #000, rgba(0,0,0,.3) 68%, #000);
+    animation: none;
+  }
+  .signin-body .site-header {
+    min-height: 60px;
+    color: #effff4;
+    border-color: rgba(194, 241, 206, .15);
+    background: rgba(5, 35, 25, .2);
+    backdrop-filter: blur(14px);
+  }
+  .signin-body .site-header .brand,
+  .signin-body .site-header nav a,
+  .signin-body .site-header .link-button { color: #f0fff4; }
+  .signin-body .site-header .nav-cta {
+    border-color: rgba(204, 241, 213, .32);
+    background: rgba(241, 255, 244, .08);
+  }
+  .signin-body .page-shell {
+    width: min(100% - 24px, 520px);
+    min-height: 0;
+    padding: 14px 0 24px;
+  }
+  .signin-body .signin-page {
+    display: block;
+    min-height: 0;
+    overflow: visible;
+    border: 1px solid rgba(190, 237, 202, .17);
+    border-radius: 22px;
+    background: rgba(5, 37, 27, .12);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .12);
+    backdrop-filter: blur(3px);
+  }
+  .signin-body .signin-story {
+    min-height: 218px;
+    padding: 25px 22px;
+    overflow: hidden;
+    color: #f3fff7;
+    background: transparent;
+    background-size: auto;
+    animation: none;
+  }
+  .signin-body .signin-story::before,
+  .signin-body .signin-story::after { border-color: rgba(214, 255, 228, .13); }
+  .signin-body .story-heading { max-width: 75%; }
+  .signin-body .story-kicker { color: #bce9cc; }
+  .signin-body .story-heading h1 { color: #f7fff9; font-size: clamp(2.2rem, 9vw, 3rem); }
+  .signin-body .story-heading h1 span { color: #a7e9ba; }
+  .signin-body .story-heading > p { color: #c0d8c9; }
+  .signin-body .motion-toggle { color: #e4f8e9; }
+  .signin-body .signin-main {
+    position: relative;
+    z-index: 1;
+    padding: 28px clamp(18px, 6vw, 30px) 25px;
+    overflow: visible;
+    border-top: 1px solid rgba(194, 241, 206, .15);
+    background: transparent;
+  }
+  .signin-body .signin-main::before { display: none; }
+  .signin-body .signin-card { width: 100%; max-width: 410px; }
+  .signin-body .signin-card-brand { margin-bottom: 24px; color: #e9f9ee; }
+  .signin-body .brand-mark { color: #f5fff7; border: 1px solid rgba(194, 241, 206, .18); background: #176b47; }
+  .signin-body .signin-eyebrow { color: #a6dfb6; }
+  .signin-body .signin-card h2 { color: #f5fff7; font-size: clamp(1.9rem, 8vw, 2.3rem); }
+  .signin-body .signin-subtitle { margin-bottom: 23px; color: #c0d5c7; }
+  .signin-body .signin-field label { color: #e1f1e5; }
+  .signin-body .input-wrap .field-icon { color: #9fb9a7; }
+  .signin-body .signin-field .form-control {
+    min-height: 52px;
+    color: #f4fff6;
+    border-color: rgba(203, 235, 210, .3);
+    background: rgba(240, 255, 244, .09);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+  }
+  .signin-body .signin-field .form-control::placeholder { color: #aec1b3; }
+  .signin-body .signin-field .form-control:focus {
+    border-color: #86d9a1;
+    background: rgba(241, 255, 245, .13);
+    box-shadow: 0 0 0 4px rgba(120, 220, 153, .14);
+  }
+  .signin-body .signin-submit {
+    min-height: 52px;
+    color: #fff;
+    background: linear-gradient(105deg, #299965, #18724b);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, .2);
+  }
+  .signin-body .signin-divider { color: #aec4b4; }
+  .signin-body .signin-divider::before,
+  .signin-body .signin-divider::after { background: rgba(208, 237, 215, .22); }
+  .signin-body .create-account-link {
+    color: #e9fff0;
+    border-color: rgba(202, 238, 210, .32);
+    background: rgba(244, 255, 246, .07);
+  }
+  .signin-body .create-account-link:hover { color: #fff; background: rgba(244, 255, 246, .13); }
+  .signin-body .signin-assurance { color: #b6cbbd; }
+  .signin-body .signin-assurance svg { color: #9bd8ad; }
+  .signin-body .signin-copyright { margin-top: 20px; color: #a9c2b0; }
+  .signin-body .site-footer {
+    color: #b8d0bd;
+    border-color: rgba(194, 241, 206, .15);
+    background: rgba(5, 35, 25, .12);
+  }
+  body.signin-body.motion-paused::before { animation-play-state: paused; }
+}
+@media (max-width: 360px) {
+  .signin-body .site-header { padding-right: 10px; padding-left: 10px; gap: 7px; }
+  .signin-body .site-header .brand { font-size: 1.08rem; }
+  .signin-body .site-header nav { gap: 7px; font-size: .8rem; }
+  .signin-body .site-header .nav-cta { padding-right: 7px; padding-left: 7px; }
+  .signin-body .page-shell { width: calc(100% - 18px); }
+  .signin-body .signin-story { min-height: 205px; padding: 23px 18px; }
+  .signin-body .story-heading { max-width: 72%; }
+  .signin-body .story-heading h1 { font-size: clamp(1.95rem, 8.5vw, 2.25rem); }
+  .signin-body .story-heading > p { max-width: 220px; font-size: .76rem; }
+  .signin-body .motion-toggle { top: 12px; right: 11px; min-height: 29px; font-size: .58rem; }
+  .signin-body .signin-main { padding-right: 17px; padding-left: 17px; }
+  .signin-body .signin-form { gap: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.signin-body::before { animation: none !important; }
+  .signin-body .signin-page, .signin-body .signin-card,
+  .signin-body .signin-story::before, .signin-body .signin-story::after { animation: none !important; }
+}

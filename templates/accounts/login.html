@@ -9,9 +9,9 @@
       <span data-motion-label>Pause motion</span>
     </button>
     <div class="story-heading">
-      <span class="story-kicker"><span class="story-kicker-dot"></span> A better loop for paper</span>
-      <h1>Good things<br><span>come full circle.</span></h1>
-      <p>Bring your institution and recycling partners together in one clear place.</p>
+      <span class="story-kicker"><span class="story-kicker-dot"></span> Paper recycling, reimagined</span>
+      <h1>Give paper<br><span>a new life.</span></h1>
+      <p>Connect your campus with trusted collectors and keep every bulk pickup accounted for.</p>
     </div>
 
     <div class="loop-visual" aria-hidden="true">
@@ -110,15 +110,20 @@
     const page = document.querySelector(".signin-page");
     const toggle = document.querySelector("[data-motion-toggle]");
     const label = toggle && toggle.querySelector("[data-motion-label]");
+    const visual = page && page.querySelector(".loop-visual");
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (!page || !toggle || !label) return;
 
     const setMotion = (enabled) => {
+      enabled = enabled && !preference.matches;
       page.classList.toggle("motion-enabled", enabled);
       page.classList.toggle("motion-paused", !enabled && !preference.matches);
+      document.body.classList.toggle("motion-enabled", enabled);
+      document.body.classList.toggle("motion-paused", !enabled && !preference.matches);
       toggle.setAttribute("aria-pressed", String(enabled));
-      toggle.setAttribute("aria-label", enabled ? "Pause ambient motion" : "Play ambient motion");
-      label.textContent = enabled ? "Pause motion" : "Play motion";
+      toggle.disabled = preference.matches;
+      toggle.setAttribute("aria-label", preference.matches ? "Motion disabled by reduced motion preference" : enabled ? "Pause ambient motion" : "Play ambient motion");
+      label.textContent = preference.matches ? "Motion reduced" : enabled ? "Pause motion" : "Play motion";
     };
 
     setMotion(!preference.matches);
@@ -130,6 +135,21 @@
       preference.addEventListener("change", onPreferenceChange);
     } else {
       preference.addListener(onPreferenceChange);
+    }
+
+    if (visual) {
+      visual.addEventListener("pointermove", (event) => {
+        if (!page.classList.contains("motion-enabled") || event.pointerType === "touch") return;
+        const bounds = visual.getBoundingClientRect();
+        const x = (event.clientX - bounds.left) / bounds.width - .5;
+        const y = (event.clientY - bounds.top) / bounds.height - .5;
+        visual.style.setProperty("--scene-tilt-x", `${(-y * 9).toFixed(2)}deg`);
+        visual.style.setProperty("--scene-tilt-y", `${(x * 12).toFixed(2)}deg`);
+      }, { passive: true });
+      visual.addEventListener("pointerleave", () => {
+        visual.style.setProperty("--scene-tilt-x", "0deg");
+        visual.style.setProperty("--scene-tilt-y", "0deg");
+      }, { passive: true });
     }
   })();
 </script>
