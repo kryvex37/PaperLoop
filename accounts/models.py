@@ -1,13 +1,22 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import F
 from django.db.models.functions import Lower
+from django.utils import timezone
 
 
 class UserRole(models.TextChoices):
     EDUCATIONAL_INSTITUTION = "institution", "Educational Institution"
     RECYCLING_PARTNER = "partner", "Recycling/Collection Partner"
     PLATFORM_ADMIN = "platform_admin", "Platform Administrator"
+
+
+class VerificationStatus(models.TextChoices):
+    PENDING = "pending", "Pending review"
+    VERIFIED = "verified", "Verified"
+    REJECTED = "rejected", "Rejected"
+    SUSPENDED = "suspended", "Suspended"
 
 
 PUBLIC_REGISTRATION_ROLES = (
@@ -54,6 +63,16 @@ class User(AbstractUser):
     organization_name = models.CharField(max_length=180, blank=True)
     contact_name = models.CharField(max_length=120, blank=True)
     phone = models.CharField(max_length=32, blank=True)
+    verification_status = models.CharField(
+        max_length=16, choices=VerificationStatus.choices,
+        default=VerificationStatus.PENDING,
+    )
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="verified_accounts",
+    )
+    verification_notes = models.TextField(blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
@@ -76,3 +95,123 @@ class User(AbstractUser):
     @property
     def is_recycling_partner(self):
         return self.role == UserRole.RECYCLING_PARTNER
+
+    @property
+    def is_verified_organization(self):
+        return self.verification_status == VerificationStatus.VERIFIED and self.is_active
+
+
+class EducationalInstitution(models.Model):
+    """Verified institution account and its organization-specific details."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="institution")
+    institution_type = models.CharField(max_length=80, blank=True)
+    registration_number = models.CharField(max_length=100, blank=True)
+    address = models.TextField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.user.organization_name
+
+
+class RecyclingProfile(models.Model):
+    """Capabilities and service area for a recycling/collection partner."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="recycling_profile")
+    accepted_paper_types = models.JSONField(default=list, blank=True)
+    service_area = models.TextField(blank=True)
+    capacity_kg_per_month = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    collection_available = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Recycling profile: {self.user.organization_name}"
+
+
+class PaperListing(models.Model):
+    class PaperCategory(models.TextChoices):
+        OFFICE = "office_paper", "Office paper"
+        BOOKS = "books_notebooks", "Books and notebooks"
+        NEWS = "newspapers_magazines", "Newspapers and magazines"
+        CARDBOARD = "cardboard", "Cardboard"
+        MIXED = "mixed_paper", "Mixed paper"
+        OTHER = "other", "Other paper"
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", "Draft"
+        AVAILABLE = "available", "Available"
+        RESERVED = "reserved", "Reserved"
+        COMPLETED = "completed", "Completed"
+        CANCELLED = "cancelled", "Cancelled"
+
+    institution = models.ForeignKey(EducationalInstitution, on_delete=models.PROTECT, related_name="paper_listings")
+    paper_type = models.CharField(max_length=80, choices=PaperCategory.choices)
+    category_details = models.CharField(max_length=160, blank=True)
+    quantity_kg = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.TextField(blank=True)
+    pickup_address = models.TextField()
+    pickup_city = models.CharField(max_length=100, blank=True, null=True)
+    pickup_country = models.CharField(max_length=100, blank=True, null=True)
+    available_from = models.DateField(null=True, blank=True)
+    available_until = models.DateField(null=True, blank=True)
+    photo = models.ImageField(upload_to="paper-listings/%Y/%m/", blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.DRAFT, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        constraints = [
+            models.CheckConstraint(condition=models.Q(quantity_kg__gt=0), name="listing_quantity_positive"),
+            models.CheckConstraint(
+                condition=(models.Q(available_until__isnull=True) | models.Q(available_from__isnull=True) | models.Q(available_until__gte=F("available_from"))),
+                name="listing_collection_window_ordered",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.paper_type} ({self.quantity_kg} kg)"
+
+
+class Collection(models.Model):
+    class Status(models.TextChoices):
+        REQUESTED = "requested", "Requested"
+        ACCEPTED = "accepted", "Accepted"
+        SCHEDULED = "scheduled", "Scheduled"
+        COLLECTED = "collected", "Collected"
+        CANCELLED = "cancelled", "Cancelled"
+
+    listing = models.ForeignKey(PaperListing, on_delete=models.PROTECT, related_name="collections")
+    partner = models.ForeignKey(RecyclingProfile, on_delete=models.PROTECT, related_name="collections")
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.REQUESTED, db_index=True)
+    requested_at = models.DateTimeField(auto_now_add=True)
+    scheduled_for = models.DateTimeField(null=True, blank=True)
+    collected_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("-requested_at",)
+        constraints = [models.UniqueConstraint(fields=("listing",), condition=models.Q(status__in=("requested", "accepted", "scheduled")), name="one_active_collection_per_listing")]
+
+    def __str__(self):
+        return f"Collection #{self.pk}: {self.listing}"
+
+
+class Transaction(models.Model):
+    """Record of a completed paper transfer; payment details are future scope."""
+
+    collection = models.OneToOneField(Collection, on_delete=models.PROTECT, related_name="transaction")
+    quantity_kg = models.DecimalField(max_digits=12, decimal_places=2)
+    completed_at = models.DateTimeField(default=timezone.now)
+    reference = models.CharField(max_length=100, blank=True, unique=True, null=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("-completed_at",)
+
+    def __str__(self):
+        return f"Transaction #{self.pk} ({self.quantity_kg} kg)"

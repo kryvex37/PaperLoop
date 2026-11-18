@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Organization review · PaperLoop{% endblock %}
+{% block content %}
+<section class="narrow-shell dashboard-card">
+  <p class="eyebrow">Organization review</p>
+  <h1>Your account is {{ verification_status|lower }}.</h1>
+  {% if verification_status == "Pending review" %}
+    <p>A PaperLoop administrator will review your organization. Role-specific features will be available after verification.</p>
+  {% elif verification_status == "Rejected" %}
+    <p>Your organization could not be verified. Contact a PaperLoop administrator for next steps.</p>
+  {% else %}
+    <p>Organization access is currently unavailable. Contact a PaperLoop administrator for help.</p>
+  {% endif %}
+</section>
+{% endblock %}
