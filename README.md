@@ -1,18 +1,20 @@
 # PaperLoop
 
-PaperLoop is a Django application for educational institutions and recycling/collection partners to coordinate bulk paper recycling. This initial implementation covers **FR-01: User Registration and Role-Based Access Control**.
+PaperLoop is a Django application for educational institutions and recycling/collection partners to coordinate bulk paper recycling. It covers **FR-01: User Registration and Role-Based Access Control**, the verification foundation of **FR-02**, and institution paper listings for **FR-03, FR-04, and FR-05**.
 
 ## Included in FR-01
 
-- Organization registration as an Educational Institution or Recycling/Collection Partner.
+- Organization registration as an Educational Institution or Recycling/Collection Partner. New organizations start in pending review; they can sign in but cannot use role-specific features until verified.
 - Email-based authentication and secure password hashing through Django authentication.
 - A custom account model with organization name, contact person, phone, and role.
 - Separate institution and partner dashboards, protected by server-side role checks.
 - Responsive registration and sign-in pages using Bootstrap 5.3.9 with PaperLoop styles.
-- Django administration for platform staff and superusers.
+- Django administration for platform staff and superusers, including verification, rejection, and suspension actions.
+- Initial ORM records for educational institutions, recycling profiles, paper listings, collections, and completed transactions.
+- Bootstrap institution dashboard with create, edit, and withdraw listing flows; listings capture paper category, estimated kilograms, pickup location, collection window, and an optional private photo upload.
 - SQLite for local development and PostgreSQL configuration through environment variables.
 
-Organization verification and activation are intentionally separate and belong to FR-02. This initial registration flow creates active accounts; align activation behavior with FR-02 before implementing verification.
+Verification policy assumption: registrations remain enabled for authentication so users can see review status, while protected organization pages require verified status. Rejection retains the account for audit and support; suspension also disables sign-in. The schema models one organization profile per account for this initial milestone.
 
 ## Local setup
 
@@ -24,7 +26,7 @@ Organization verification and activation are intentionally separate and belong t
 6. Start the development server: `python manage.py runserver`.
 7. Open `/accounts/register/` to register an institution or partner, `/accounts/login/` to sign in, or `/admin/` for the Django administration site.
 
-Set `DATABASE_URL` to a PostgreSQL connection string, or set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, and optional `DB_SSLMODE`. A URL can include `?sslmode=require` when your database provider requires TLS. If `DATABASE_URL` and `DB_NAME` are both empty, the app uses local SQLite.
+Set `DATABASE_URL` to a PostgreSQL connection string, or set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, and optional `DB_SSLMODE`. A URL can include `?sslmode=require` when your database provider requires TLS. Django uses PostgreSQL when configured and local SQLite as a convenient fallback.
 
 ### Project-local PostgreSQL server
 

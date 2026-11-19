@@ -1,8 +1,9 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
+from django.db import transaction
 
-from .models import PUBLIC_REGISTRATION_ROLES, User, UserRole
+from .models import EducationalInstitution, PUBLIC_REGISTRATION_ROLES, RecyclingProfile, User, UserRole, VerificationStatus
 
 
 class RegistrationForm(UserCreationForm):
@@ -44,6 +45,7 @@ class RegistrationForm(UserCreationForm):
             raise ValidationError("Choose a valid organization type.")
         return role
 
+    @transaction.atomic
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
@@ -51,8 +53,14 @@ class RegistrationForm(UserCreationForm):
         user.organization_name = self.cleaned_data["organization_name"].strip()
         user.contact_name = self.cleaned_data["contact_name"].strip()
         user.phone = self.cleaned_data["phone"].strip()
+        user.verification_status = VerificationStatus.PENDING
+        user.is_active = True
         if commit:
             user.save()
+            if user.role == UserRole.EDUCATIONAL_INSTITUTION:
+                EducationalInstitution.objects.create(user=user)
+            elif user.role == UserRole.RECYCLING_PARTNER:
+                RecyclingProfile.objects.create(user=user)
         return user
 
 
@@ -68,6 +76,17 @@ class AdminUserCreationForm(UserCreationForm):
         for field in self.fields.values():
             css_class = "form-select" if isinstance(field.widget, forms.Select) else "form-control"
             field.widget.attrs["class"] = css_class
+
+    @transaction.atomic
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if commit:
+            user.save()
+            if user.role == UserRole.EDUCATIONAL_INSTITUTION:
+                EducationalInstitution.objects.get_or_create(user=user)
+            elif user.role == UserRole.RECYCLING_PARTNER:
+                RecyclingProfile.objects.get_or_create(user=user)
+        return user
 
 
 class EmailAuthenticationForm(AuthenticationForm):
