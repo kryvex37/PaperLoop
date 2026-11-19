@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Institution dashboard · PaperLoop{% endblock %}
+{% block title %}Institution Dashboard · PaperLoop{% endblock %}
 {% block content %}
 <div class="container py-4 py-lg-5">
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
@@ -8,7 +8,7 @@
       <h1 class="h2 mb-1">{{ user.organization_name }}</h1>
       <p class="text-secondary mb-0">Manage paper waste and preferred collection details.</p>
     </div>
-    <a class="btn btn-success px-4" href="{% url 'accounts:listing_create' %}">Create paper listing</a>
+    <div class="d-flex gap-2"><a class="btn btn-outline-success px-4" href="{% url 'accounts:partner_directory' %}">Browse partners</a><a class="btn btn-success px-4" href="{% url 'accounts:listing_create' %}">Create paper listing</a></div>
   </div>
 
   <div class="row g-3 mb-4">
@@ -25,30 +25,74 @@
       {% if listings %}
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0">
-            <thead class="table-light"><tr><th scope="col" class="ps-3 ps-md-4">Paper</th><th scope="col">Estimated amount</th><th scope="col">Pickup location</th><th scope="col">Collection period</th><th scope="col">Status</th><th scope="col" class="text-end pe-3 pe-md-4">Actions</th></tr></thead>
+            <thead class="table-light">
+              <tr>
+                <th scope="col" class="ps-3 ps-md-4">Paper</th>
+                <th scope="col">Estimated amount</th>
+                <th scope="col">Pickup location</th>
+                <th scope="col">Collection period</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="text-end pe-3 pe-md-4">Actions</th>
+              </tr>
+            </thead>
             <tbody>
               {% for listing in listings %}
                 <tr>
                   <td class="ps-3 ps-md-4">
                     <div class="d-flex align-items-center gap-3">
-                      {% if listing.photo %}<img src="{% url 'accounts:listing_photo' listing.pk %}" alt="Photo for {{ listing.get_paper_type_display }} listing" width="52" height="52" class="rounded object-fit-cover border">{% endif %}
-                      <div><div class="fw-semibold">{{ listing.get_paper_type_display }}</div>{% if listing.category_details %}<div class="small text-secondary">{{ listing.category_details }}</div>{% endif %}</div>
+                      {% if listing.photo %}
+                        <img src="{% url 'accounts:listing_photo' listing.pk %}" alt="Photo for {{ listing.get_paper_type_display }} listing" width="52" height="52" class="rounded object-fit-cover border">
+                      {% endif %}
+                      <div>
+                        <div class="fw-semibold">{{ listing.get_paper_type_display }}</div>
+                        {% if listing.category_details %}
+                          <div class="small text-secondary">{{ listing.category_details }}</div>
+                        {% endif %}
+                      </div>
                     </div>
                   </td>
                   <td class="text-nowrap">{{ listing.quantity_kg }} kg</td>
-                  <td>{{ listing.pickup_city }}, {{ listing.pickup_country }}</td>
-                  <td class="text-nowrap small">{% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible{% endif %}{% if listing.available_until %}<br>to {{ listing.available_until|date:"M j, Y" }}{% endif %}</td>
-                  <td><span class="badge rounded-pill {% if listing.status == 'available' %}text-bg-success{% elif listing.status == 'draft' %}text-bg-secondary{% else %}text-bg-light border text-secondary{% endif %}">{{ listing.get_status_display }}</span></td>
+                  <td>{{ listing.pickup_city }}{% if listing.pickup_country %}, {{ listing.pickup_country }}{% endif %}</td>
+                  <td class="text-nowrap small">
+                    {% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible{% endif %}
+                    {% if listing.available_until %}<br>to {{ listing.available_until|date:"M j, Y" }}{% endif %}
+                  </td>
+                  <td>
+                    {% if listing.has_collection or listing.status == 'reserved' %}
+                      <span class="badge rounded-pill text-bg-warning">Collection Requested</span>
+                    {% elif listing.status == 'available' %}
+                      <span class="badge rounded-pill text-bg-success">Available</span>
+                    {% elif listing.status == 'draft' %}
+                      <span class="badge rounded-pill text-bg-secondary">Draft</span>
+                    {% elif listing.status == 'cancelled' %}
+                      <span class="badge rounded-pill text-bg-light border text-secondary">Cancelled</span>
+                    {% else %}
+                      <span class="badge rounded-pill text-bg-light border text-secondary">{{ listing.get_status_display }}</span>
+                    {% endif %}
+                  </td>
                   <td class="text-end pe-3 pe-md-4">
-                    {% if not listing.has_collection and listing.status == 'available' or not listing.has_collection and listing.status == 'draft' %}
+                    {% if not listing.has_collection and listing.status == 'available' %}
+                      <div class="d-inline-flex gap-2">
+                        <a class="btn btn-sm btn-success" href="{% url 'accounts:listing_recommendations' listing.pk %}">Find Recycler</a>
+                        <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:listing_edit' listing.pk %}">Edit</a>
+                        <form method="post" action="{% url 'accounts:listing_cancel' listing.pk %}">
+                          {% csrf_token %}
+                          <button class="btn btn-sm btn-outline-secondary" type="submit" aria-label="Withdraw {{ listing.get_paper_type_display }} listing">Withdraw</button>
+                        </form>
+                      </div>
+                    {% elif not listing.has_collection and listing.status == 'draft' %}
                       <div class="d-inline-flex gap-2">
                         <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:listing_edit' listing.pk %}">Edit</a>
                         <form method="post" action="{% url 'accounts:listing_cancel' listing.pk %}">
-                          {% csrf_token %}<button class="btn btn-sm btn-outline-secondary" type="submit" aria-label="Withdraw {{ listing.get_paper_type_display }} listing">Withdraw</button>
+                          {% csrf_token %}
+                          <button class="btn btn-sm btn-outline-secondary" type="submit" aria-label="Withdraw {{ listing.get_paper_type_display }} listing">Withdraw</button>
                         </form>
                       </div>
-                    {% elif listing.has_collection %}<span class="small text-secondary">Collection activity recorded</span>
-                    {% elif listing.status == 'cancelled' %}<span class="small text-secondary">Withdrawn</span>{% endif %}
+                    {% elif listing.has_collection or listing.status == 'reserved' %}
+                      <span class="badge rounded-pill text-bg-warning">Collection Requested</span>
+                    {% elif listing.status == 'cancelled' %}
+                      <span class="small text-secondary">Withdrawn</span>
+                    {% endif %}
                   </td>
                 </tr>
               {% endfor %}
