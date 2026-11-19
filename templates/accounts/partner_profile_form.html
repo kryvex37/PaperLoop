@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Partner Profile &amp; Capacity · PaperLoop{% endblock %}
+{% block content %}
+<main class="container py-4" style="max-width: 800px;">
+  <a class="link-success text-decoration-none small" href="{% url 'accounts:partner_dashboard' %}">← Back to dashboard</a>
+  <header class="my-4">
+    <p class="text-uppercase text-success fw-bold small mb-1">Recycling / Collection Partner</p>
+    <h1 class="h2 fw-bold">Partner profile &amp; capacity</h1>
+    <p class="text-secondary">Manage your company details, accepted paper categories, service area, and available processing capacity.</p>
+  </header>
+  <form method="post" class="card border-0 shadow-sm">
+    {% csrf_token %}
+    <div class="card-body p-4 p-md-5">
+      {{ form.capacity_kg_per_month }}
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      <fieldset class="mb-4">
+        <legend class="h5 fw-bold">Company &amp; contact</legend>
+        <div class="row g-3">
+          {% for field in form %}{% if field.name == 'organization_name' or field.name == 'contact_name' or field.name == 'phone' %}
+          <div class="col-12 col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+          {% endif %}{% endfor %}
+        </div>
+        <p class="small text-secondary mt-3 mb-0">Account status: {{ request.user.get_verification_status_display }}{% if not request.user.is_active %} · Inactive{% else %} · Active{% endif %}</p>
+      </fieldset>
+      <fieldset class="mb-4">
+        <legend class="h5 fw-bold">Capacity &amp; Service Area</legend>
+        <div class="row g-3">
+          {% for field in form %}{% if field.name == 'maximum_capacity' or field.name == 'current_allocated_load' or field.name == 'capacity_unit' or field.name == 'capacity_period' %}
+          <div class="col-12 col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+          {% endif %}{% endfor %}
+          <div class="col-12"><label class="form-label" for="{{ form.service_area.id_for_label }}">{{ form.service_area.label }}</label>{{ form.service_area }}{% if form.service_area.help_text %}<div class="form-text">{{ form.service_area.help_text }}</div>{% endif %}{% for error in form.service_area.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+        </div>
+        <p class="small text-secondary mt-2 mb-0">Available capacity is calculated as maximum capacity minus allocated load.</p>
+      </fieldset>
+      <fieldset>
+        <legend class="h5 fw-bold">Accepted Paper Categories</legend>
+        <div class="row g-2">{% for widget in form.accepted_paper_types %}<div class="col-12 col-sm-6"><div class="form-check border rounded p-3">{{ widget.tag }}<label class="form-check-label ms-1" for="{{ widget.id_for_label }}">{{ widget.choice_label }}</label></div></div>{% endfor %}</div>
+        {% for error in form.accepted_paper_types.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+      </fieldset>
+      <fieldset class="mt-4"><legend class="h5 fw-bold">Operating Status</legend><div class="form-check form-switch">{{ form.collection_available }}<label class="form-check-label" for="{{ form.collection_available.id_for_label }}">{{ form.collection_available.label }}</label><div class="form-text">{{ form.collection_available.help_text }}</div>{% for error in form.collection_available.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div></fieldset>
+    </div>
+    <div class="card-footer bg-light border-0 p-3 d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{% url 'accounts:partner_dashboard' %}">Cancel</a><button class="btn btn-success" type="submit">Save profile</button></div>
+  </form>
+</main>
+{% endblock %}

@@ -1,11 +1,180 @@
 {% extends "base.html" %}
-{% block title %}Partner dashboard · PaperLoop{% endblock %}
+{% block title %}Partner Dashboard · PaperLoop{% endblock %}
 {% block content %}
-<section class="dashboard-card">
-  <p class="eyebrow">Recycling/collection partner</p>
-  <h1>Welcome, {{ user.organization_name }}</h1>
-  <p>Your partner account is ready. PaperLoop will give this workspace partner-specific tools for accepted paper categories, collection capacity, and suitable opportunities.</p>
-  <div class="status-panel"><strong>Account type</strong><span>{{ user.get_role_display }}</span></div>
-  <p class="muted">This is the FR-01 account and access foundation. Recycler profiles and collection workflows will be added in their respective requirements.</p>
-</section>
+<div class="container py-4">
+  <!-- Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <p class="text-uppercase text-success fw-bold small mb-1 tracking-wide">Recycling / Collection Partner</p>
+      <h1 class="h2 mb-1 fw-bold text-dark">{{ user.organization_name|default:"Partner Dashboard" }}</h1>
+      <p class="text-secondary mb-0">
+        {% if user.contact_name %}
+          <span>Contact Person: <strong class="text-dark">{{ user.contact_name }}</strong></span>
+          {% if user.email %}<span class="mx-1">·</span><span>{{ user.email }}</span>{% endif %}
+          {% if user.phone %}<span class="mx-1">·</span><span>{{ user.phone }}</span>{% endif %}
+        {% else %}
+          <span>Manage your operational capacity, accepted paper categories, and incoming collection requests.</span>
+        {% endif %}
+      </p>
+    </div>
+    <div>
+      <a class="btn btn-outline-secondary px-3 me-1" href="{% url 'accounts:partner_profile_detail' %}">View Profile</a>
+      <a class="btn btn-outline-success px-4" href="{% url 'accounts:partner_profile' %}">Edit Profile &amp; Capacity</a>
+    </div>
+  </div>
+
+  <!-- KPI Row (3 cards) -->
+  <div class="row g-3 mb-4">
+    <!-- Card 1: Operational Status -->
+    <div class="col-12 col-md-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body d-flex flex-column justify-content-between p-3 p-md-4">
+          <div class="text-secondary small fw-medium mb-2">Operational Status</div>
+          <div>
+            {% if profile.collection_available %}
+              <span class="badge bg-success fs-6 px-3 py-2 rounded-pill">Accepting Collections</span>
+            {% else %}
+              <span class="badge bg-secondary fs-6 px-3 py-2 rounded-pill">Paused</span>
+            {% endif %}
+          </div>
+          <div class="text-secondary small mt-2">
+            {% if profile.collection_available %}
+              Active and accepting incoming collection requests
+            {% else %}
+              Collections temporarily paused
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Processing Capacity -->
+    <div class="col-12 col-md-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body d-flex flex-column justify-content-between p-3 p-md-4">
+          <div class="text-secondary small fw-medium mb-2">Processing Capacity</div>
+          <div class="fs-4 fw-bold text-dark">
+            {% if profile.maximum_capacity != None %}{{ profile.maximum_capacity }} {{ profile.capacity_unit }}{% elif profile.capacity_kg_per_month != None %}{{ profile.capacity_kg_per_month }} kg{% else %}Flexible kg{% endif %}
+          </div>
+          <div class="text-secondary small mt-2">
+            {% if profile.maximum_capacity != None %}
+              Maximum {{ profile.get_capacity_period_display }} processing capacity · {{ profile.available_capacity }} {{ profile.capacity_unit }} available
+            {% elif profile.capacity_kg_per_month != None %}
+              Maximum monthly processing capacity
+            {% else %}
+              Flexible collection capacity
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Accepted Categories count -->
+    <div class="col-12 col-md-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body d-flex flex-column justify-content-between p-3 p-md-4">
+          <div class="text-secondary small fw-medium mb-2">Accepted Categories</div>
+          <div class="fs-4 fw-bold text-success">
+            {{ profile.accepted_paper_types|length }}
+          </div>
+          <div class="text-secondary small mt-2">
+            Paper material categories configured
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profile Details Card -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3 p-md-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0 fw-bold">Profile Details</h2>
+        <a class="small text-success text-decoration-none fw-semibold" href="{% url 'accounts:partner_profile' %}">Edit details →</a>
+      </div>
+      <div class="row g-4">
+        <div class="col-12 col-md-6">
+          <div class="text-secondary small fw-semibold text-uppercase mb-2">Accepted Paper Categories</div>
+          <div class="d-flex flex-wrap gap-2">
+            {% if profile.accepted_paper_types %}
+              {% for ptype in profile.accepted_paper_types %}
+                <span class="badge rounded-pill bg-light text-dark border px-3 py-2 fw-medium">
+                  {% if ptype == 'office_paper' %}Office paper{% elif ptype == 'books_notebooks' %}Books and notebooks{% elif ptype == 'newspapers_magazines' %}Newspapers and magazines{% elif ptype == 'cardboard' %}Cardboard{% elif ptype == 'mixed_paper' %}Mixed paper{% elif ptype == 'other' %}Other paper{% else %}{{ ptype }}{% endif %}
+                </span>
+              {% endfor %}
+            {% else %}
+              <span class="text-muted small">No categories configured yet. <a href="{% url 'accounts:partner_profile' %}" class="text-success">Set accepted categories</a> to appear in recommendations.</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-12 col-md-6 border-start-md ps-md-4">
+          <div class="text-secondary small fw-semibold text-uppercase mb-2">Service Area</div>
+          <p class="mb-0 text-dark fw-medium">
+            {{ profile.service_area|default:"Not specified" }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming Collection Requests Section -->
+  <section class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <div class="p-3 p-md-4 border-bottom">
+        <h2 class="h5 mb-1 fw-bold">Incoming Collection Requests</h2>
+        <p class="small text-secondary mb-0">Collection requests initiated by educational institutions based on PaperLoop recommendations.</p>
+      </div>
+
+      {% if incoming_collections %}
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" class="ps-3 ps-md-4">Listing</th>
+                <th scope="col">Institution</th>
+                <th scope="col">Quantity</th>
+                <th scope="col">Pickup City</th>
+                <th scope="col">Requested At</th>
+                <th scope="col" class="pe-3 pe-md-4">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for collection in incoming_collections %}
+                <tr>
+                  <td class="ps-3 ps-md-4">
+                    <div class="fw-semibold text-dark">{{ collection.listing.get_paper_type_display }}</div>
+                    {% if collection.listing.category_details %}
+                      <div class="small text-secondary">{{ collection.listing.category_details }}</div>
+                    {% endif %}
+                  </td>
+                  <td class="fw-medium">
+                    {{ collection.listing.institution.user.organization_name }}
+                  </td>
+                  <td class="text-nowrap">{{ collection.listing.quantity_kg }} kg</td>
+                  <td>{{ collection.listing.pickup_city|default:"—" }}</td>
+                  <td class="text-nowrap small text-secondary">{{ collection.requested_at|date:"M j, Y" }}</td>
+                  <td class="pe-3 pe-md-4">
+                    <span class="badge rounded-pill {% if collection.status == 'requested' %}text-bg-warning{% elif collection.status == 'accepted' or collection.status == 'scheduled' %}text-bg-primary{% elif collection.status == 'collected' %}text-bg-success{% else %}text-bg-secondary{% endif %}">
+                      {{ collection.get_status_display }}
+                    </span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="text-center px-3 py-5">
+          <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px" aria-hidden="true">
+            <span class="fs-4">📦</span>
+          </div>
+          <h3 class="h5">No incoming collection requests yet</h3>
+          <p class="text-secondary mx-auto mb-0" style="max-width:440px">
+            When educational institutions create paper listings matching your capacity, service area, and accepted materials, collection requests will appear here.
+          </p>
+        </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
 {% endblock %}

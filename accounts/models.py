@@ -120,13 +120,40 @@ class EducationalInstitution(models.Model):
 class RecyclingProfile(models.Model):
     """Capabilities and service area for a recycling/collection partner."""
 
+    class CapacityUnit(models.TextChoices):
+        KILOGRAM = "kg", "Kilograms"
+        TON = "ton", "Metric tons"
+
+    class CapacityPeriod(models.TextChoices):
+        DAY = "day", "per day"
+        WEEK = "week", "per week"
+        MONTH = "month", "per month"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="recycling_profile")
     accepted_paper_types = models.JSONField(default=list, blank=True)
     service_area = models.TextField(blank=True)
     capacity_kg_per_month = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    maximum_capacity = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    current_allocated_load = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    capacity_unit = models.CharField(max_length=8, choices=CapacityUnit.choices, default=CapacityUnit.KILOGRAM)
+    capacity_period = models.CharField(max_length=8, choices=CapacityPeriod.choices, default=CapacityPeriod.MONTH)
     collection_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(maximum_capacity__isnull=True) | models.Q(current_allocated_load__lte=F("maximum_capacity"))),
+                name="recycler_allocated_within_capacity",
+            ),
+        ]
+
+    @property
+    def available_capacity(self):
+        if self.maximum_capacity is None:
+            return None
+        return self.maximum_capacity - self.current_allocated_load
 
     def __str__(self):
         return f"Recycling profile: {self.user.organization_name}"
