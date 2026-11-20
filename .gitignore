@@ -7,3 +7,5 @@ venv/
 staticfiles/
 media/
 .local/
+ml_engine/artifacts/
+ml_engine/datasets/data/

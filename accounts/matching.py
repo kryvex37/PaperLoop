@@ -1,4 +1,6 @@
 from decimal import Decimal
+from math import asin, cos, radians, sin, sqrt
+from django.conf import settings
 
 from .models import Collection, RecyclingProfile, VerificationStatus
 
@@ -98,5 +100,54 @@ def get_recommended_partners(listing):
             ],
         })
 
-    recommendations.sort(key=lambda item: item["partner"].user.organization_name.casefold())
+    # Only invoke the learned ranker when all required candidate features are
+    # genuinely available. Current FR-06/08 schema lacks coordinates, pricing,
+    # and fulfillment history, so it safely retains the established baseline.
+    feature_rows = []
+    complete_features = True
+    for item in recommendations:
+        partner = item["partner"]
+        capacity = item["available_capacity_kg"]
+        listing_lat = getattr(listing, "pickup_latitude", None)
+        listing_lon = getattr(listing, "pickup_longitude", None)
+        if listing_lat is None:
+            listing_lat = listing.institution.latitude
+        if listing_lon is None:
+            listing_lon = listing.institution.longitude
+        partner_lat = getattr(partner, "latitude", None)
+        partner_lon = getattr(partner, "longitude", None)
+        required = (listing_lat, listing_lon, partner_lat, partner_lon,
+                    getattr(partner, "historical_fulfillment_rate", None),
+                    getattr(partner, "average_rating", None),
+                    getattr(partner, "price_competitiveness", None))
+        if capacity is None or any(value is None for value in required):
+            complete_features = False
+            break
+        lat1, lon1, lat2, lon2 = map(float, (listing_lat, listing_lon, partner_lat, partner_lon))
+        dlat, dlon = radians(lat2 - lat1), radians(lon2 - lon1)
+        haversine = 2 * 6371 * asin(sqrt(sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2))
+        feature_rows.append({
+            "distance_km": haversine,
+            "capacity_utilization_ratio": float(listing.quantity_kg / capacity),
+            "paper_grade_match": 1,
+            "historical_fulfillment_rate": float(partner.historical_fulfillment_rate),
+            "average_rating": float(partner.average_rating),
+            "price_competitiveness": float(partner.price_competitiveness),
+        })
+
+    if complete_features and feature_rows:
+        from ml_engine.inference.partner_match import PartnerMatchInference
+        inference = PartnerMatchInference(settings.BASE_DIR / "ml_engine" / "artifacts" / "recycler_ranker.pt")
+        ranked = inference.predict(feature_rows)
+    else:
+        ranked = None
+    if ranked is None:
+        for item in recommendations:
+            item["match_factors"] = list(item["match_reasons"])
+        recommendations.sort(key=lambda item: item["partner"].user.organization_name.casefold())
+    else:
+        for item, result in zip(recommendations, ranked):
+            item["ai_relevance"] = round(result["score"], 4)
+            item["match_factors"] = result["factors"]
+        recommendations.sort(key=lambda item: (-item["ai_relevance"], item["partner"].user.organization_name.casefold()))
     return recommendations

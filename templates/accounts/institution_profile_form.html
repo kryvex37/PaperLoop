@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Institution Profile · PaperLoop{% endblock %}
+{% block content %}
+<main class="container py-4" style="max-width: 800px;">
+  <a class="link-success text-decoration-none small" href="{% url 'accounts:institution_dashboard' %}">← Back to dashboard</a>
+  <header class="my-4"><p class="text-uppercase text-success fw-bold small mb-1">Educational institution</p><h1 class="h2 fw-bold">Location and forecast profile</h1><p class="text-secondary">Coordinates enable nearby bulk pickup suggestions. Student count helps estimate future weekly paper volume.</p></header>
+  <form method="post" class="card border-0 shadow-sm">
+    {% csrf_token %}
+    <div class="card-body p-4">
+      {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+      <div class="row g-3">
+        {% for field in form %}<div class="col-12 {% if field.name == 'address' %}col-md-12{% else %}col-md-6{% endif %}">
+          <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        </div>{% endfor %}
+      </div>
+    </div>
+    <div class="card-footer bg-light border-0 p-3 d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{% url 'accounts:institution_dashboard' %}">Cancel</a><button class="btn btn-success" type="submit">Save profile</button></div>
+  </form>
+</main>
+{% endblock %}

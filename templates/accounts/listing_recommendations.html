@@ -67,6 +67,9 @@
               </div>
               <div class="text-sm-end">
                 <span class="badge text-bg-success fs-6 px-3 py-2 rounded-pill">{{ rec.match_score }}% Match</span>
+                {% if rec.ai_relevance != None %}
+                  <div class="small text-secondary mt-1">Model relevance: {{ rec.ai_relevance|floatformat:2 }}</div>
+                {% endif %}
               </div>
             </div>
 
@@ -74,7 +77,7 @@
               <div class="col-12 col-md-7">
                 <div class="small fw-semibold text-secondary mb-2">Match Explainability:</div>
                 <ul class="list-unstyled mb-0">
-                  {% for reason in rec.match_reasons %}
+                  {% for reason in rec.match_factors %}
                     <li class="small text-success mb-1 fw-medium">{{ reason }}</li>
                   {% endfor %}
                 </ul>

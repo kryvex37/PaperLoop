@@ -12,6 +12,7 @@ from .models import (
     User,
     UserRole,
     VerificationStatus,
+    WasteRecord,
 )
 
 
@@ -65,13 +66,13 @@ class UserAdmin(DjangoUserAdmin):
 
 @admin.register(EducationalInstitution)
 class EducationalInstitutionAdmin(admin.ModelAdmin):
-    list_display = ("user", "institution_type", "registration_number", "city", "country")
+    list_display = ("user", "institution_type", "registration_number", "city", "country", "student_count", "latitude", "longitude")
     search_fields = ("user__organization_name", "user__email", "registration_number")
 
 
 @admin.register(RecyclingProfile)
 class RecyclingProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "collection_available", "capacity_kg_per_month")
+    list_display = ("user", "collection_available", "capacity_kg_per_month", "latitude", "longitude")
     search_fields = ("user__organization_name", "user__email", "service_area")
 
 
@@ -91,3 +92,10 @@ class CollectionAdmin(admin.ModelAdmin):
 @admin.register(Transaction)
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ("collection", "quantity_kg", "completed_at", "reference")
+
+
+@admin.register(WasteRecord)
+class WasteRecordAdmin(admin.ModelAdmin):
+    list_display = ("institution", "week_start", "paper_grade", "actual_weight_kg", "is_synthetic")
+    list_filter = ("paper_grade", "is_synthetic", "week_start")
+    search_fields = ("institution__user__organization_name",)
