@@ -9,7 +9,8 @@ from django.views.decorators.http import require_http_methods, require_POST
 from PIL import Image
 
 from .decorators import partner_profile_required, role_required
-from .forms import PartnerDirectoryFilterForm, RecyclingProfileForm, RegistrationForm
+from .forms import (EducationalInstitutionProfileForm, PartnerDirectoryFilterForm,
+                    RecyclingProfileForm, RegistrationForm)
 from .listing_forms import PaperListingForm
 from .matching import ACTIVE_ALLOCATION_STATUSES, get_recommended_partners, partner_is_eligible, capacity_available_kg
 from .models import (
@@ -20,6 +21,7 @@ from .models import (
     UserRole,
     VerificationStatus,
 )
+from ml_engine.services import forecast_institution, get_live_bulk_aggregation_recommendations
 
 
 @require_http_methods(["GET", "POST"])
@@ -72,8 +74,27 @@ def institution_dashboard(request):
             "listing_count": listings.count(),
             "available_count": listings.filter(status=PaperListing.Status.AVAILABLE).count(),
             "draft_count": listings.filter(status=PaperListing.Status.DRAFT).count(),
+            "forecast_summary": forecast_institution(institution, weeks=4),
         },
     )
+
+
+@role_required(UserRole.EDUCATIONAL_INSTITUTION)
+@require_http_methods(["GET", "POST"])
+def edit_institution_profile(request):
+    institution, _ = EducationalInstitution.objects.get_or_create(user=request.user)
+    form = EducationalInstitutionProfileForm(request.POST or None, instance=institution)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Institution location and forecast profile saved.")
+        return redirect("accounts:institution_dashboard")
+    return render(request, "accounts/institution_profile_form.html", {"form": form})
+
+
+@role_required(UserRole.EDUCATIONAL_INSTITUTION)
+def bulk_aggregation_dashboard(request):
+    opportunities = get_live_bulk_aggregation_recommendations()
+    return render(request, "accounts/bulk_aggregation.html", {"opportunities": opportunities})
 
 
 @role_required(UserRole.EDUCATIONAL_INSTITUTION)

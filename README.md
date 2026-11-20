@@ -28,6 +28,27 @@ Verification policy assumption: registrations remain enabled for authentication 
 
 Set `DATABASE_URL` to a PostgreSQL connection string, or set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, and optional `DB_SSLMODE`. A URL can include `?sslmode=require` when your database provider requires TLS. Django uses PostgreSQL when configured and local SQLite as a convenient fallback.
 
+## AI pilot pipeline
+
+The `ml_engine` package contains a seeded NumPy/pandas pilot generator, a next-week paper-waste forecaster, a grouped pairwise recycler ranker, and a spatial-temporal bulk aggregation scorer. The generator writes synthetic institutions and recyclers, 24 months of calendar-aware weekly waste records, transaction and pickup history, geo-clustered pickup requests, labeled recycler candidates, and aggregation proposals. It does not create or mutate Django production rows. Synthetic records and labels exist to exercise the pipeline and do not represent observed marketplace behavior.
+
+The forecaster uses weekly lags, institution size, paper-category shares, and calendar features; it returns a point estimate and an approximate 90% prediction interval. The ranker uses distance, capacity utilization, paper compatibility, fulfillment, ratings, and price competitiveness, and explains each score through feature perturbation. Django recommendations still enforce FR-06 eligibility before ranking. Since the current schema does not store coordinates, prices, ratings, or fulfillment history, Django uses the alphabetical fallback until those real candidate features are supplied. Missing or invalid artifacts also use the fallback.
+
+Institution and recycler profiles now store nullable latitude/longitude. Institutions also store student count; `WasteRecord` stores weekly weights by paper grade. Institutions can update size and location at `/accounts/institution/profile/`; partner profile forms accept coordinates. The institution dashboard shows four forecast weeks when at least four recorded weeks exist, with an exam-season alert and a calendar-adjusted baseline fallback if no checkpoint is available. `/accounts/ai/bulk-aggregation/` lists feasible bundles across geocoded active listings and verified recyclers. New or un-geocoded profiles receive explanatory empty states. Existing FR-07 recommendations render reason factors at `/accounts/institution/listings/<id>/recommendations/`.
+
+`ml_engine.services.forecast_week()` exposes inference for a validated feature row; `forecast_institution()` derives rows from persisted `WasteRecord`s. `recommend_bulk_aggregations()` accepts pickup requests with coordinates/windows and recycler capacity/type/location data; it filters radius, window overlap, per-load dispatch threshold, truck capacity, paper compatibility, service area, and recycler capacity before scoring bundles. It returns participants, combined kg, savings, transport cost per kg, explanation factors, and the best capacity-compatible recycler.
+
+After configuring `DATABASE_URL` for PostgreSQL in the ignored `.env`, run `python manage.py migrate` and `python manage.py seed_pilot_data`. The seeder creates idempotent Dhaka pilot organizations, geo coordinates, 104 weeks of synthetic grade-level weights with academic-cycle effects, and active listings only where pilot records are insufficient. Seeded data is marked synthetic and never overwrites non-pilot organizations or waste rows.
+
+From the `PaperLoop` directory, run:
+
+```powershell
+python manage.py generate_pilot_data --institutions 80 --requests 1500 --months 24 --seed 42
+python manage.py train_ai_models --seed 42 --epochs 35
+```
+
+Pilot CSV data and `.pt`/`.json` checkpoints are generated under `ml_engine/datasets/data/` and `ml_engine/artifacts/` and are excluded from Git. Training uses a chronological holdout for forecasting, request-group holdout for ranking, and a seeded shuffled holdout for aggregation. JSON sidecars record metrics, seed, feature schema, feature scaling, and configuration. Metrics evaluate synthetic data only; validate with appropriate historical outcomes and compare to a baseline before drawing conclusions about real marketplace performance. Run `python manage.py test` for the Django and ML pipeline test suite.
+
 ### Project-local PostgreSQL server
 
 This workspace has a PostgreSQL 18.6 development server and database in the ignored `.local/` directory. Its connection settings and generated development credentials are in the ignored `.env` file. Keep both directories private; neither is committed to Git.

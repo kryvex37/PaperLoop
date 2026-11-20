@@ -110,6 +110,9 @@ class EducationalInstitution(models.Model):
     address = models.TextField(blank=True)
     city = models.CharField(max_length=100, blank=True)
     country = models.CharField(max_length=100, blank=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    student_count = models.PositiveIntegerField(default=500)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -138,6 +141,11 @@ class RecyclingProfile(models.Model):
     capacity_unit = models.CharField(max_length=8, choices=CapacityUnit.choices, default=CapacityUnit.KILOGRAM)
     capacity_period = models.CharField(max_length=8, choices=CapacityPeriod.choices, default=CapacityPeriod.MONTH)
     collection_available = models.BooleanField(default=True)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
+    historical_fulfillment_rate = models.FloatField(null=True, blank=True, default=None)
+    average_rating = models.FloatField(null=True, blank=True, default=None)
+    price_competitiveness = models.FloatField(null=True, blank=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -202,6 +210,29 @@ class PaperListing(models.Model):
 
     def __str__(self):
         return f"{self.paper_type} ({self.quantity_kg} kg)"
+
+
+class WasteRecord(models.Model):
+    """Institution weekly paper weights used for forecasts and audit history."""
+
+    institution = models.ForeignKey(EducationalInstitution, on_delete=models.CASCADE, related_name="waste_records")
+    week_start = models.DateField(db_index=True)
+    paper_grade = models.CharField(max_length=80, choices=PaperListing.PaperCategory.choices)
+    actual_weight_kg = models.DecimalField(max_digits=12, decimal_places=2)
+    is_synthetic = models.BooleanField(default=False, db_index=True)
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-week_start", "institution_id", "paper_grade")
+        constraints = [
+            models.UniqueConstraint(fields=("institution", "week_start", "paper_grade"),
+                                    name="unique_institution_week_paper_grade"),
+            models.CheckConstraint(condition=models.Q(actual_weight_kg__gt=0),
+                                   name="waste_record_weight_positive"),
+        ]
+
+    def __str__(self):
+        return f"{self.institution} {self.paper_grade}: {self.actual_weight_kg} kg ({self.week_start})"
 
 
 class Collection(models.Model):

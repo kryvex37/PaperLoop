@@ -24,6 +24,8 @@ urlpatterns = [
         name="logout",
     ),
     path("institution/", views.institution_dashboard, name="institution_dashboard"),
+    path("institution/profile/", views.edit_institution_profile, name="institution_profile"),
+    path("ai/bulk-aggregation/", views.bulk_aggregation_dashboard, name="bulk_aggregation"),
     path("institution/partners/", views.partner_directory, name="partner_directory"),
     path("institution/partners/<int:profile_id>/", views.partner_public_detail, name="partner_public_detail"),
     path("institution/listings/new/", views.create_listing, name="listing_create"),
