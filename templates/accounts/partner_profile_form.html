@@ -32,6 +32,7 @@
         </div>
         <p class="small text-secondary mt-2 mb-0">Available capacity is calculated as maximum capacity minus allocated load.</p>
       </fieldset>
+      <fieldset class="mb-4"><legend class="h5 fw-bold">Pickup Coordinates</legend><div class="row g-3">{% for field in form %}{% if field.name == 'latitude' or field.name == 'longitude' %}<div class="col-12 col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div></fieldset>
       <fieldset>
         <legend class="h5 fw-bold">Accepted Paper Categories</legend>
         <div class="row g-2">{% for widget in form.accepted_paper_types %}<div class="col-12 col-sm-6"><div class="form-check border rounded p-3">{{ widget.tag }}<label class="form-check-label ms-1" for="{{ widget.id_for_label }}">{{ widget.choice_label }}</label></div></div>{% endfor %}</div>

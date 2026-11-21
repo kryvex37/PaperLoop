@@ -139,6 +139,10 @@ class RecyclingProfileForm(forms.ModelForm):
         label="Accepting collection requests",
         help_text="Uncheck to pause incoming collection requests.",
     )
+    latitude = forms.FloatField(required=False, min_value=-90, max_value=90,
+                                 help_text="Optional decimal latitude for accurate pickup matching.")
+    longitude = forms.FloatField(required=False, min_value=-180, max_value=180,
+                                 help_text="Optional decimal longitude for accurate pickup matching.")
 
     class Meta:
         model = RecyclingProfile
@@ -151,6 +155,8 @@ class RecyclingProfileForm(forms.ModelForm):
             "capacity_unit",
             "capacity_period",
             "collection_available",
+            "latitude",
+            "longitude",
         )
 
     def __init__(self, *args, **kwargs):
@@ -214,6 +220,24 @@ class RecyclingProfileForm(forms.ModelForm):
             user.phone = (self.cleaned_data.get("phone") or user.phone).strip()
             user.save(update_fields=("organization_name", "contact_name", "phone"))
         return profile
+
+
+class EducationalInstitutionProfileForm(forms.ModelForm):
+    latitude = forms.FloatField(required=False, min_value=-90, max_value=90)
+    longitude = forms.FloatField(required=False, min_value=-180, max_value=180)
+    student_count = forms.IntegerField(min_value=1, required=True)
+
+    class Meta:
+        model = EducationalInstitution
+        fields = ("institution_type", "address", "city", "country", "student_count", "latitude", "longitude")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["student_count"].help_text = "Approximate enrolled students; used only for paper-volume forecasts."
+        self.fields["latitude"].help_text = "Decimal latitude for pickup clustering."
+        self.fields["longitude"].help_text = "Decimal longitude for pickup clustering."
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
 
 
 class PartnerDirectoryFilterForm(forms.Form):
