@@ -85,8 +85,13 @@ class PaperListingAdmin(admin.ModelAdmin):
 
 @admin.register(Collection)
 class CollectionAdmin(admin.ModelAdmin):
-    list_display = ("listing", "partner", "status", "requested_at", "scheduled_for")
+    list_display = ("listing", "partner", "status", "estimated_quantity_display", "final_collected_quantity_kg", "requested_at", "scheduled_for", "collected_at")
     list_filter = ("status",)
+    search_fields = ("listing__institution__user__organization_name", "partner__user__organization_name", "notes", "rejection_reason")
+
+    def estimated_quantity_display(self, obj):
+        return f"{obj.estimated_quantity} kg" if obj.estimated_quantity else "—"
+    estimated_quantity_display.short_description = "Est. Quantity"
 
 
 @admin.register(Transaction)

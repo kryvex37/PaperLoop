@@ -241,19 +241,55 @@ class Collection(models.Model):
         ACCEPTED = "accepted", "Accepted"
         SCHEDULED = "scheduled", "Scheduled"
         COLLECTED = "collected", "Collected"
+        REJECTED = "rejected", "Rejected"
         CANCELLED = "cancelled", "Cancelled"
 
     listing = models.ForeignKey(PaperListing, on_delete=models.PROTECT, related_name="collections")
     partner = models.ForeignKey(RecyclingProfile, on_delete=models.PROTECT, related_name="collections")
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.REQUESTED, db_index=True)
+    estimated_quantity_kg = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    final_collected_quantity_kg = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     requested_at = models.DateTimeField(auto_now_add=True)
     scheduled_for = models.DateTimeField(null=True, blank=True)
     collected_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True)
+    rejection_reason = models.TextField(blank=True)
 
     class Meta:
         ordering = ("-requested_at",)
-        constraints = [models.UniqueConstraint(fields=("listing",), condition=models.Q(status__in=("requested", "accepted", "scheduled")), name="one_active_collection_per_listing")]
+        constraints = [
+            models.UniqueConstraint(
+                fields=("listing",),
+                condition=models.Q(status__in=("requested", "accepted", "scheduled")),
+                name="one_active_collection_per_listing",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(estimated_quantity_kg__isnull=True)
+                    | models.Q(estimated_quantity_kg__gt=0)
+                ),
+                name="collection_estimated_quantity_positive",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(final_collected_quantity_kg__isnull=True)
+                    | models.Q(final_collected_quantity_kg__gt=0)
+                ),
+                name="collection_final_quantity_positive",
+            ),
+        ]
+
+    @property
+    def estimated_quantity(self):
+        if self.estimated_quantity_kg is not None:
+            return self.estimated_quantity_kg
+        if self.listing_id and hasattr(self, "listing") and self.listing:
+            return self.listing.quantity_kg
+        return None
+
+    @property
+    def is_active(self):
+        return self.status in (self.Status.REQUESTED, self.Status.ACCEPTED, self.Status.SCHEDULED)
 
     def __str__(self):
         return f"Collection #{self.pk}: {self.listing}"

@@ -38,4 +38,10 @@ urlpatterns = [
     path("partner/profile/", views.edit_partner_profile, name="partner_profile"),
     path("partner/profile/new/", views.edit_partner_profile, name="partner_profile_create"),
     path("partner/profile/view/", views.partner_profile_detail, name="partner_profile_detail"),
+    path("collections/<int:collection_id>/", views.collection_detail, name="collection_detail"),
+    path("collections/<int:collection_id>/accept/", views.partner_accept_collection, name="partner_accept_collection"),
+    path("collections/<int:collection_id>/reject/", views.partner_reject_collection, name="partner_reject_collection"),
+    path("collections/<int:collection_id>/schedule/", views.partner_schedule_collection, name="partner_schedule_collection"),
+    path("collections/<int:collection_id>/complete/", views.partner_complete_collection, name="partner_complete_collection"),
+    path("collections/<int:collection_id>/cancel/", views.institution_cancel_collection, name="institution_cancel_collection"),
 ]

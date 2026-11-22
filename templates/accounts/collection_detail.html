@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+{% block title %}Collection #{{ collection.pk }} · PaperLoop{% endblock %}
+
+{% block content %}
+<div class="container py-4 py-lg-5">
+  <!-- Breadcrumb & Back navigation -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      {% if is_owner_institution %}
+        <li class="breadcrumb-item"><a href="{% url 'accounts:institution_dashboard' %}" class="text-success text-decoration-none">Institution Dashboard</a></li>
+      {% elif is_assigned_partner %}
+        <li class="breadcrumb-item"><a href="{% url 'accounts:partner_dashboard' %}" class="text-success text-decoration-none">Partner Dashboard</a></li>
+      {% else %}
+        <li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}" class="text-success text-decoration-none">Dashboard</a></li>
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">Collection #{{ collection.pk }}</li>
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <h1 class="h2 mb-0 fw-bold">Collection #{{ collection.pk }}</h1>
+        <span class="badge rounded-pill fs-6 px-3 py-2 {% if collection.status == 'requested' %}text-bg-warning{% elif collection.status == 'accepted' %}text-bg-info text-white{% elif collection.status == 'scheduled' %}text-bg-primary{% elif collection.status == 'collected' %}text-bg-success{% elif collection.status == 'rejected' %}text-bg-danger{% else %}text-bg-secondary{% endif %}">
+          {{ collection.get_status_display }}
+        </span>
+      </div>
+      <p class="text-secondary mb-0">
+        Initiated on {{ collection.requested_at|date:"M j, Y at g:i A" }}
+        for <strong>{{ collection.listing.get_paper_type_display }}</strong>
+      </p>
+    </div>
+    <div>
+      {% if is_owner_institution %}
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:institution_dashboard' %}">← Back to Dashboard</a>
+      {% elif is_assigned_partner %}
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:partner_dashboard' %}">← Back to Dashboard</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Lifecycle Progress Stepper (when active) -->
+  {% if collection.status != 'rejected' and collection.status != 'cancelled' %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <div class="row text-center g-2">
+          <!-- Step 1: Requested -->
+          <div class="col-3">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2 bg-success text-white" style="width:40px;height:40px;">
+              ✓
+            </div>
+            <div class="fw-bold small text-dark">1. Requested</div>
+            <div class="text-secondary small">{{ collection.requested_at|date:"M j" }}</div>
+          </div>
+          <!-- Step 2: Accepted -->
+          <div class="col-3">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2 {% if collection.status in 'accepted,scheduled,collected' %}bg-success text-white{% else %}bg-light text-secondary border{% endif %}" style="width:40px;height:40px;">
+              {% if collection.status in 'accepted,scheduled,collected' %}✓{% else %}2{% endif %}
+            </div>
+            <div class="fw-bold small {% if collection.status in 'accepted,scheduled,collected' %}text-dark{% else %}text-secondary{% endif %}">2. Accepted</div>
+            <div class="text-secondary small">
+              {% if collection.status in 'accepted,scheduled,collected' %}Approved{% else %}Pending{% endif %}
+            </div>
+          </div>
+          <!-- Step 3: Scheduled -->
+          <div class="col-3">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2 {% if collection.status in 'scheduled,collected' %}bg-success text-white{% else %}bg-light text-secondary border{% endif %}" style="width:40px;height:40px;">
+              {% if collection.status in 'scheduled,collected' %}✓{% else %}3{% endif %}
+            </div>
+            <div class="fw-bold small {% if collection.status in 'scheduled,collected' %}text-dark{% else %}text-secondary{% endif %}">3. Scheduled</div>
+            <div class="text-secondary small">
+              {% if collection.scheduled_for %}{{ collection.scheduled_for|date:"M j, g:i A" }}{% else %}Awaiting schedule{% endif %}
+            </div>
+          </div>
+          <!-- Step 4: Collected -->
+          <div class="col-3">
+            <div class="rounded-circle d-inline-flex align-items-center justify-content-center mb-2 {% if collection.status == 'collected' %}bg-success text-white{% else %}bg-light text-secondary border{% endif %}" style="width:40px;height:40px;">
+              {% if collection.status == 'collected' %}✓{% else %}4{% endif %}
+            </div>
+            <div class="fw-bold small {% if collection.status == 'collected' %}text-success{% else %}text-secondary{% endif %}">4. Collected</div>
+            <div class="text-secondary small">
+              {% if collection.collected_at %}{{ collection.collected_at|date:"M j" }}{% else %}Awaiting pickup{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <!-- Alert for Rejected or Cancelled -->
+    <div class="alert {% if collection.status == 'rejected' %}alert-danger{% else %}alert-secondary{% endif %} mb-4" role="alert">
+      <h5 class="alert-heading fw-bold mb-1">
+        {% if collection.status == 'rejected' %}Collection Request Rejected{% else %}Collection Request Cancelled{% endif %}
+      </h5>
+      <p class="mb-0">
+        {% if collection.rejection_reason %}
+          <strong>Reason:</strong> {{ collection.rejection_reason }}
+        {% else %}
+          This collection request was {% if collection.status == 'rejected' %}rejected by the partner{% else %}cancelled by the institution{% endif %}.
+        {% endif %}
+      </p>
+      {% if is_owner_institution and listing.status == 'available' %}
+        <div class="mt-3">
+          <a class="btn btn-sm btn-success" href="{% url 'accounts:listing_recommendations' listing.pk %}">Select Another Recycling Partner</a>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- FR-10: Quantity Tracking KPI Cards -->
+  <div class="row g-3 mb-4">
+    <!-- Card 1: Estimated Quantity -->
+    <div class="col-12 col-md-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body p-3 p-md-4">
+          <div class="text-secondary small fw-semibold text-uppercase mb-1">Estimated Quantity (FR-10)</div>
+          <div class="display-6 fw-bold text-dark">{{ collection.estimated_quantity }} <span class="fs-5 text-secondary">kg</span></div>
+          <p class="small text-secondary mb-0 mt-2">Specified by institution at listing creation</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2: Final Collected Quantity -->
+    <div class="col-12 col-md-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body p-3 p-md-4">
+          <div class="text-secondary small fw-semibold text-uppercase mb-1">Final Collected Quantity (FR-10)</div>
+          {% if collection.final_collected_quantity_kg %}
+            <div class="display-6 fw-bold text-success">{{ collection.final_collected_quantity_kg }} <span class="fs-5 text-secondary">kg</span></div>
+            <p class="small text-secondary mb-0 mt-2">Verified and recorded by recycling partner</p>
+          {% else %}
+            <div class="display-6 fw-bold text-muted">— <span class="fs-5 text-secondary">kg</span></div>
+            <p class="small text-muted mb-0 mt-2">Will be recorded when pickup is completed</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3: Collection Status / Scheduled Date -->
+    <div class="col-12 col-md-4">
+      <div class="card h-100 border-0 shadow-sm">
+        <div class="card-body p-3 p-md-4">
+          <div class="text-secondary small fw-semibold text-uppercase mb-1">Scheduled Pickup</div>
+          {% if collection.scheduled_for %}
+            <div class="h4 fw-bold text-primary mb-1">{{ collection.scheduled_for|date:"M j, Y" }}</div>
+            <p class="small text-secondary mb-0">At {{ collection.scheduled_for|date:"g:i A" }}</p>
+          {% else %}
+            <div class="h4 fw-bold text-muted mb-1">Not yet scheduled</div>
+            <p class="small text-secondary mb-0">Awaiting partner scheduling</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Paper Listing Details & History -->
+    <div class="col-12 col-lg-7">
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+          <h2 class="h5 fw-bold mb-3">Paper Waste Listing Details</h2>
+          <div class="d-flex align-items-start gap-3 mb-4">
+            {% if listing.photo %}
+              <img src="{% url 'accounts:listing_photo' listing.pk %}" alt="{{ listing.get_paper_type_display }}" width="90" height="90" class="rounded object-fit-cover border">
+            {% endif %}
+            <div>
+              <h3 class="h5 mb-1 fw-bold text-dark">{{ listing.get_paper_type_display }}</h3>
+              {% if listing.category_details %}
+                <p class="text-secondary small mb-1">{{ listing.category_details }}</p>
+              {% endif %}
+              <div class="badge bg-light text-dark border">{{ listing.quantity_kg }} kg estimated</div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-sm-6">
+              <div class="text-secondary small fw-semibold text-uppercase">Pickup Location</div>
+              <div class="fw-medium text-dark">{{ listing.pickup_address }}</div>
+              <div class="small text-secondary">{{ listing.pickup_city }}{% if listing.pickup_country %}, {{ listing.pickup_country }}{% endif %}</div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="text-secondary small fw-semibold text-uppercase">Institution Preferred Window</div>
+              <div class="fw-medium text-dark">
+                {% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible{% endif %}
+                {% if listing.available_until %} to {{ listing.available_until|date:"M j, Y" }}{% endif %}
+              </div>
+            </div>
+            {% if listing.description %}
+              <div class="col-12">
+                <div class="text-secondary small fw-semibold text-uppercase">Listing Description</div>
+                <div class="text-secondary small">{{ listing.description }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes and Timeline Card -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+          <h2 class="h5 fw-bold mb-3">Collection Notes &amp; Activity Log</h2>
+          {% if collection.notes %}
+            <div class="bg-light p-3 rounded border text-secondary small mb-3" style="white-space: pre-line;">{{ collection.notes }}</div>
+          {% else %}
+            <p class="text-secondary small mb-3">No specific notes recorded for this collection.</p>
+          {% endif %}
+
+          <div class="border-top pt-3 small text-secondary">
+            <div>• <strong>Requested:</strong> {{ collection.requested_at|date:"F j, Y, g:i A" }}</div>
+            {% if collection.scheduled_for %}
+              <div>• <strong>Pickup Scheduled For:</strong> {{ collection.scheduled_for|date:"F j, Y, g:i A" }}</div>
+            {% endif %}
+            {% if collection.collected_at %}
+              <div>• <strong>Completed Pickup:</strong> {{ collection.collected_at|date:"F j, Y, g:i A" }}</div>
+            {% endif %}
+            {% if collection.rejection_reason %}
+              <div class="text-danger">• <strong>Rejection Reason:</strong> {{ collection.rejection_reason }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Parties & Action Controls -->
+    <div class="col-12 col-lg-5">
+      <!-- Contact Information Card -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-3 p-md-4">
+          <h2 class="h5 fw-bold mb-3">Participant Details</h2>
+          
+          <!-- Educational Institution Section -->
+          <div class="mb-3 pb-3 border-bottom">
+            <div class="text-uppercase text-secondary small fw-semibold mb-1">Educational Institution</div>
+            <div class="fw-bold text-dark fs-6">{{ collection.listing.institution.user.organization_name }}</div>
+            {% if collection.listing.institution.user.contact_name %}
+              <div class="small text-secondary">Contact: {{ collection.listing.institution.user.contact_name }}</div>
+            {% endif %}
+            {% if collection.listing.institution.user.phone %}
+              <div class="small text-secondary">Phone: {{ collection.listing.institution.user.phone }}</div>
+            {% endif %}
+            {% if collection.listing.institution.user.email %}
+              <div class="small text-secondary">Email: {{ collection.listing.institution.user.email }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Recycling Partner Section -->
+          <div>
+            <div class="text-uppercase text-secondary small fw-semibold mb-1">Recycling / Collection Partner</div>
+            <div class="fw-bold text-dark fs-6">{{ collection.partner.user.organization_name }}</div>
+            {% if collection.partner.user.contact_name %}
+              <div class="small text-secondary">Contact: {{ collection.partner.user.contact_name }}</div>
+            {% endif %}
+            {% if collection.partner.user.phone %}
+              <div class="small text-secondary">Phone: {{ collection.partner.user.phone }}</div>
+            {% endif %}
+            {% if collection.partner.user.email %}
+              <div class="small text-secondary">Email: {{ collection.partner.user.email }}</div>
+            {% endif %}
+            {% if collection.partner.service_area %}
+              <div class="small text-secondary">Service Area: {{ collection.partner.service_area }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Panel for Partner -->
+      {% if is_assigned_partner %}
+        <div class="card border-0 shadow-sm mb-4 border-top border-4 border-success">
+          <div class="card-body p-3 p-md-4">
+            <h2 class="h5 fw-bold mb-3">Partner Collection Actions</h2>
+
+            <!-- State 1: REQUESTED -> Accept or Reject -->
+            {% if collection.status == 'requested' %}
+              <p class="small text-secondary mb-3">
+                Review this incoming collection request from <strong>{{ collection.listing.institution.user.organization_name }}</strong>. You can accept the request to schedule pickup or reject it.
+              </p>
+              
+              <!-- Accept Form -->
+              <form method="post" action="{% url 'accounts:partner_accept_collection' collection.pk %}" class="mb-3">
+                {% csrf_token %}
+                <div class="mb-2">
+                  {{ accept_form.notes.label_tag }}
+                  {{ accept_form.notes }}
+                </div>
+                <button type="submit" class="btn btn-success w-100 fw-semibold">
+                  ✓ Accept Collection Request
+                </button>
+              </form>
+
+              <hr>
+
+              <!-- Reject Toggle / Form -->
+              <button class="btn btn-outline-danger btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#rejectCollapse" aria-expanded="false">
+                ✕ Reject Collection Request
+              </button>
+              <div class="collapse mt-3" id="rejectCollapse">
+                <form method="post" action="{% url 'accounts:partner_reject_collection' collection.pk %}">
+                  {% csrf_token %}
+                  <div class="mb-2">
+                    {{ reject_form.rejection_reason.label_tag }}
+                    {{ reject_form.rejection_reason }}
+                  </div>
+                  <button type="submit" class="btn btn-danger btn-sm w-100">
+                    Confirm Rejection
+                  </button>
+                </form>
+              </div>
+
+            <!-- State 2: ACCEPTED -> Schedule Pickup -->
+            {% elif collection.status == 'accepted' %}
+              <p class="small text-secondary mb-3">
+                This collection has been accepted. Set the scheduled pickup date and time for your collection truck/crew.
+              </p>
+              <form method="post" action="{% url 'accounts:partner_schedule_collection' collection.pk %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="id_scheduled_for" class="form-label small fw-semibold">Scheduled Date &amp; Time</label>
+                  {{ schedule_form.scheduled_for }}
+                </div>
+                <div class="mb-3">
+                  <label for="id_schedule_notes" class="form-label small fw-semibold">Pickup Notes / Instructions</label>
+                  {{ schedule_form.notes }}
+                </div>
+                <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                  📅 Schedule Pickup
+                </button>
+              </form>
+
+            <!-- State 3: SCHEDULED -> Complete Collection (or Reschedule) -->
+            {% elif collection.status == 'scheduled' %}
+              <div class="alert alert-primary py-2 px-3 small mb-3">
+                Pickup is currently scheduled for <strong>{{ collection.scheduled_for|date:"M j, Y at g:i A" }}</strong>.
+              </div>
+              <h3 class="h6 fw-bold text-dark mb-2">Record &amp; Complete Collection (FR-10)</h3>
+              <p class="small text-secondary mb-3">
+                Once paper has been picked up and weighed, enter the verified final collected quantity to complete this collection and create the recycling transaction record.
+              </p>
+
+              <!-- Complete Form -->
+              <form method="post" action="{% url 'accounts:partner_complete_collection' collection.pk %}" class="mb-3">
+                {% csrf_token %}
+                <div class="mb-3">
+                  <label for="id_final_quantity" class="form-label small fw-semibold">Final Collected Quantity (kg) *</label>
+                  {{ complete_form.final_collected_quantity_kg }}
+                  <div class="form-text small">Estimated: {{ collection.estimated_quantity }} kg</div>
+                </div>
+                <div class="mb-3">
+                  <label for="id_complete_notes" class="form-label small fw-semibold">Completion Notes</label>
+                  {{ complete_form.notes }}
+                </div>
+                <button type="submit" class="btn btn-success w-100 fw-semibold">
+                  ✓ Record Final Quantity &amp; Complete Collection
+                </button>
+              </form>
+
+              <hr>
+
+              <!-- Reschedule option -->
+              <button class="btn btn-outline-secondary btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#rescheduleCollapse">
+                Reschedule Pickup Date
+              </button>
+              <div class="collapse mt-3" id="rescheduleCollapse">
+                <form method="post" action="{% url 'accounts:partner_schedule_collection' collection.pk %}">
+                  {% csrf_token %}
+                  <div class="mb-2">
+                    {{ schedule_form.scheduled_for }}
+                  </div>
+                  <button type="submit" class="btn btn-secondary btn-sm w-100">Update Pickup Time</button>
+                </form>
+              </div>
+
+            <!-- State 4: COLLECTED -->
+            {% elif collection.status == 'collected' %}
+              <div class="text-center py-3">
+                <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center mb-2" style="width:48px;height:48px;">
+                  ✓
+                </div>
+                <h3 class="h6 fw-bold text-success mb-1">Collection Completed</h3>
+                <p class="small text-secondary mb-2">
+                  Paper waste has been collected and recorded ({{ collection.final_collected_quantity_kg }} kg).
+                </p>
+                {% if collection.transaction %}
+                  <div class="badge bg-light text-dark border p-2 mb-2">
+                    Ref: {{ collection.transaction.reference }}
+                  </div>
+                {% endif %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+
+      <!-- Action Panel for Institution -->
+      {% if is_owner_institution %}
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-body p-3 p-md-4">
+            <h2 class="h5 fw-bold mb-3">Institution Request Actions</h2>
+            {% if collection.status == 'requested' %}
+              <p class="small text-secondary mb-3">
+                Your collection request is waiting for review by <strong>{{ collection.partner.user.organization_name }}</strong>. You can cancel this request before it is accepted.
+              </p>
+              <form method="post" action="{% url 'accounts:institution_cancel_collection' collection.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Are you sure you want to cancel this collection request?');">
+                  Cancel Collection Request
+                </button>
+              </form>
+            {% elif collection.status == 'accepted' %}
+              <p class="small text-secondary mb-0">
+                ✓ <strong>{{ collection.partner.user.organization_name }}</strong> has accepted your request. They will schedule a pickup date shortly.
+              </p>
+            {% elif collection.status == 'scheduled' %}
+              <p class="small text-secondary mb-0">
+                📅 Pickup is confirmed for <strong>{{ collection.scheduled_for|date:"M j, Y at g:i A" }}</strong>. Please ensure the paper waste is ready at the designated pickup location.
+              </p>
+            {% elif collection.status == 'collected' %}
+              <p class="small text-success fw-medium mb-0">
+                ✓ Collection successfully completed! Verified final quantity: <strong>{{ collection.final_collected_quantity_kg }} kg</strong>.
+              </p>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
