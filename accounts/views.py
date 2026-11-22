@@ -4,13 +4,22 @@ from django.db import transaction
 from django.db.models import Exists, OuterRef, Q, Sum
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods, require_POST
 from PIL import Image
 
 from .decorators import partner_profile_required, role_required
-from .forms import (EducationalInstitutionProfileForm, PartnerDirectoryFilterForm,
-                    RecyclingProfileForm, RegistrationForm)
+from .forms import (
+    CollectionAcceptForm,
+    CollectionCompleteForm,
+    CollectionRejectForm,
+    CollectionScheduleForm,
+    EducationalInstitutionProfileForm,
+    PartnerDirectoryFilterForm,
+    RecyclingProfileForm,
+    RegistrationForm,
+)
 from .listing_forms import PaperListingForm
 from .matching import ACTIVE_ALLOCATION_STATUSES, get_recommended_partners, partner_is_eligible, capacity_available_kg
 from .models import (
@@ -18,6 +27,7 @@ from .models import (
     EducationalInstitution,
     PaperListing,
     RecyclingProfile,
+    Transaction,
     UserRole,
     VerificationStatus,
 )
@@ -60,9 +70,13 @@ def dashboard(request):
 @role_required(UserRole.EDUCATIONAL_INSTITUTION)
 def institution_dashboard(request):
     institution, _ = EducationalInstitution.objects.get_or_create(user=request.user)
-    active_collections = Collection.objects.filter(listing=OuterRef("pk")).exclude(status=Collection.Status.CANCELLED)
+    active_collections = Collection.objects.filter(
+        listing=OuterRef("pk"),
+        status__in=ACTIVE_ALLOCATION_STATUSES,
+    )
     listings = (
         PaperListing.objects.filter(institution=institution)
+        .prefetch_related("collections__partner__user")
         .annotate(has_collection=Exists(active_collections))
         .order_by("-created_at")
     )
@@ -118,7 +132,7 @@ def edit_listing(request, listing_id):
     institution = get_object_or_404(EducationalInstitution, user=request.user)
     listing = get_object_or_404(PaperListing, pk=listing_id, institution=institution)
     can_edit = listing.status in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE)
-    has_collection = listing.collections.exclude(status=Collection.Status.CANCELLED).exists()
+    has_collection = listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists()
     if not can_edit or has_collection:
         messages.error(request, "This listing can no longer be edited after collection activity has started.")
         return redirect("accounts:institution_dashboard")
@@ -141,7 +155,7 @@ def cancel_listing(request, listing_id):
     listing = get_object_or_404(PaperListing, pk=listing_id, institution=institution)
     if listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE):
         messages.error(request, "Only draft or available listings can be withdrawn.")
-    elif listing.collections.exclude(status=Collection.Status.CANCELLED).exists():
+    elif listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
         messages.error(request, "This listing cannot be withdrawn after collection activity has started.")
     else:
         listing.status = PaperListing.Status.CANCELLED
@@ -179,6 +193,11 @@ def partner_dashboard(request):
         .select_related("listing__institution__user")
         .order_by("-requested_at")
     )
+    available_listings = (
+        PaperListing.objects.filter(status=PaperListing.Status.AVAILABLE)
+        .select_related("institution__user")
+        .order_by("-created_at")
+    )
     total_requests = incoming_collections.count()
     pending_requests = incoming_collections.filter(status=Collection.Status.REQUESTED).count()
     return render(
@@ -187,6 +206,7 @@ def partner_dashboard(request):
         {
             "profile": profile,
             "incoming_collections": incoming_collections,
+            "available_listings": available_listings,
             "total_requests": total_requests,
             "pending_requests": pending_requests,
         },
@@ -223,7 +243,7 @@ def partner_profile_detail(request):
 def listing_recommendations(request, listing_id):
     institution = get_object_or_404(EducationalInstitution, user=request.user)
     listing = get_object_or_404(PaperListing, pk=listing_id, institution=institution)
-    has_collection = listing.collections.exclude(status=Collection.Status.CANCELLED).exists()
+    has_collection = listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists()
     if listing.status != PaperListing.Status.AVAILABLE or has_collection:
         messages.error(request, "Recommendations are only available for listings currently open for collection.")
         return redirect("accounts:institution_dashboard")
@@ -308,7 +328,7 @@ def select_recommended_partner(request, listing_id):
             pk=listing_id,
             institution=institution,
         )
-        has_active_collection = listing.collections.exclude(status=Collection.Status.CANCELLED).exists()
+        has_active_collection = listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists()
         if listing.status != PaperListing.Status.AVAILABLE or has_active_collection:
             messages.error(request, "This listing is not available for a new collection request.")
             return redirect("accounts:institution_dashboard")
@@ -333,18 +353,227 @@ def select_recommended_partner(request, listing_id):
         if not partner_is_eligible(partner, listing, pending_load_kg):
             messages.error(request, "This partner no longer meets the listing's category, service area, or remaining capacity requirements.")
             return redirect("accounts:listing_recommendations", listing_id=listing.pk)
-        Collection.objects.create(
+        collection = Collection.objects.create(
             listing=listing,
             partner=partner,
             status=Collection.Status.REQUESTED,
+            estimated_quantity_kg=listing.quantity_kg,
             notes=request.POST.get("notes", "").strip(),
         )
         listing.status = PaperListing.Status.RESERVED
         listing.save(update_fields=["status", "updated_at"])
 
-    messages.success(request, f"Collection request sent to {partner.user.organization_name}.")
+    messages.success(request, f"Collection request #{collection.pk} sent to {partner.user.organization_name}.")
+    return redirect("accounts:institution_dashboard")
+
+
+@login_required
+def collection_detail(request, collection_id):
+    """View details, status tracker, and quantity tracking for a collection."""
+    collection = get_object_or_404(
+        Collection.objects.select_related(
+            "listing__institution__user",
+            "partner__user",
+            "transaction",
+        ),
+        pk=collection_id,
+    )
+    is_owner_institution = (
+        request.user.role == UserRole.EDUCATIONAL_INSTITUTION
+        and collection.listing.institution.user_id == request.user.id
+    )
+    is_assigned_partner = (
+        request.user.role == UserRole.RECYCLING_PARTNER
+        and collection.partner.user_id == request.user.id
+    )
+    if not (is_owner_institution or is_assigned_partner or request.user.is_superuser):
+        return render(request, "403.html", status=403)
+
+    return render(
+        request,
+        "accounts/collection_detail.html",
+        {
+            "collection": collection,
+            "listing": collection.listing,
+            "is_owner_institution": is_owner_institution,
+            "is_assigned_partner": is_assigned_partner,
+            "accept_form": CollectionAcceptForm(),
+            "reject_form": CollectionRejectForm(),
+            "schedule_form": CollectionScheduleForm(),
+            "complete_form": CollectionCompleteForm(),
+        },
+    )
+
+
+@role_required(UserRole.RECYCLING_PARTNER)
+@require_POST
+def partner_accept_collection(request, collection_id):
+    """Partner accepts a requested collection."""
+    collection = get_object_or_404(
+        Collection.objects.select_for_update(),
+        pk=collection_id,
+        partner__user=request.user,
+    )
+    if collection.status != Collection.Status.REQUESTED:
+        messages.error(request, "This collection request is not in pending requested status.")
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    form = CollectionAcceptForm(request.POST)
+    with transaction.atomic():
+        collection.status = Collection.Status.ACCEPTED
+        if form.is_valid() and form.cleaned_data.get("notes"):
+            note = form.cleaned_data["notes"].strip()
+            collection.notes = f"{collection.notes}\n[Partner acceptance]: {note}".strip()
+        collection.save()
+
+    messages.success(request, f"Collection #{collection.pk} has been accepted. You can now schedule pickup.")
+    return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+
+@role_required(UserRole.RECYCLING_PARTNER)
+@require_POST
+def partner_reject_collection(request, collection_id):
+    """Partner rejects a requested collection and releases listing back to available."""
+    collection = get_object_or_404(
+        Collection.objects.select_for_update().select_related("listing"),
+        pk=collection_id,
+        partner__user=request.user,
+    )
+    if collection.status != Collection.Status.REQUESTED:
+        messages.error(request, "Only pending collection requests can be rejected.")
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    form = CollectionRejectForm(request.POST)
+    if not form.is_valid():
+        messages.error(request, "Please provide a valid reason for rejecting this collection request.")
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    with transaction.atomic():
+        collection.status = Collection.Status.REJECTED
+        collection.rejection_reason = form.cleaned_data["rejection_reason"].strip()
+        collection.save(update_fields=["status", "rejection_reason"])
+
+        listing = collection.listing
+        if not listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
+            listing.status = PaperListing.Status.AVAILABLE
+            listing.save(update_fields=["status", "updated_at"])
+
+    messages.info(request, f"Collection #{collection.pk} was rejected. The paper listing has been released back to available status.")
+    return redirect("accounts:partner_dashboard")
+
+
+@role_required(UserRole.RECYCLING_PARTNER)
+@require_POST
+def partner_schedule_collection(request, collection_id):
+    """Partner schedules the pickup date and time."""
+    collection = get_object_or_404(
+        Collection.objects.select_for_update(),
+        pk=collection_id,
+        partner__user=request.user,
+    )
+    if collection.status not in (Collection.Status.REQUESTED, Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
+        messages.error(request, "Cannot schedule a collection in this status.")
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    form = CollectionScheduleForm(request.POST)
+    if not form.is_valid():
+        for error_list in form.errors.values():
+            for error in error_list:
+                messages.error(request, error)
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    with transaction.atomic():
+        collection.scheduled_for = form.cleaned_data["scheduled_for"]
+        collection.status = Collection.Status.SCHEDULED
+        if form.cleaned_data.get("notes"):
+            note = form.cleaned_data["notes"].strip()
+            collection.notes = f"{collection.notes}\n[Scheduled pickup note]: {note}".strip()
+        collection.save()
+
+    messages.success(request, f"Collection #{collection.pk} scheduled for {collection.scheduled_for.strftime('%b %d, %Y at %I:%M %p')}.")
+    return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+
+@role_required(UserRole.RECYCLING_PARTNER)
+@require_POST
+def partner_complete_collection(request, collection_id):
+    """Partner records final collected quantity and marks collection complete."""
+    collection = get_object_or_404(
+        Collection.objects.select_for_update().select_related("listing"),
+        pk=collection_id,
+        partner__user=request.user,
+    )
+    if collection.status not in (Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
+        messages.error(request, "Only accepted or scheduled collections can be marked as collected.")
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    form = CollectionCompleteForm(request.POST)
+    if not form.is_valid():
+        for error_list in form.errors.values():
+            for error in error_list:
+                messages.error(request, error)
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    final_qty = form.cleaned_data["final_collected_quantity_kg"]
+    notes = form.cleaned_data.get("notes", "").strip()
+
+    with transaction.atomic():
+        collection.final_collected_quantity_kg = final_qty
+        collection.status = Collection.Status.COLLECTED
+        collection.collected_at = timezone.now()
+        if notes:
+            collection.notes = f"{collection.notes}\n[Collection completion]: {notes}".strip()
+        collection.save()
+
+        listing = collection.listing
+        listing.status = PaperListing.Status.COMPLETED
+        listing.save(update_fields=["status", "updated_at"])
+
+        ref = f"TXN-{timezone.now().strftime('%Y%m%d')}-{collection.pk:05d}"
+        Transaction.objects.update_or_create(
+            collection=collection,
+            defaults={
+                "quantity_kg": final_qty,
+                "completed_at": timezone.now(),
+                "reference": ref,
+                "notes": notes,
+            },
+        )
+
+    messages.success(
+        request,
+        f"Collection #{collection.pk} recorded as completed! Final quantity: {final_qty} kg (Estimated: {collection.estimated_quantity} kg).",
+    )
+    return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+
+@role_required(UserRole.EDUCATIONAL_INSTITUTION)
+@require_POST
+def institution_cancel_collection(request, collection_id):
+    """Institution cancels a collection request before it is accepted/scheduled."""
+    collection = get_object_or_404(
+        Collection.objects.select_for_update().select_related("listing"),
+        pk=collection_id,
+        listing__institution__user=request.user,
+    )
+    if collection.status != Collection.Status.REQUESTED:
+        messages.error(request, "You can only cancel collection requests that are still pending acceptance.")
+        return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+    with transaction.atomic():
+        collection.status = Collection.Status.CANCELLED
+        collection.notes = f"{collection.notes}\n[Cancelled by institution on {timezone.now().strftime('%Y-%m-%d %H:%M')}]".strip()
+        collection.save(update_fields=["status", "notes"])
+
+        listing = collection.listing
+        if not listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
+            listing.status = PaperListing.Status.AVAILABLE
+            listing.save(update_fields=["status", "updated_at"])
+
+    messages.info(request, f"Collection request #{collection.pk} was cancelled. Your listing is now available again.")
     return redirect("accounts:institution_dashboard")
 
 
 def permission_denied(request, exception=None):
     return render(request, "403.html", status=403)
+

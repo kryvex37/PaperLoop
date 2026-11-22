@@ -1,7 +1,9 @@
+from decimal import Decimal
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from .models import EducationalInstitution, PaperListing, PUBLIC_REGISTRATION_ROLES, RecyclingProfile, User, UserRole, VerificationStatus
 
@@ -260,4 +262,57 @@ class PartnerDirectoryFilterForm(forms.Form):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs["class"] = "form-select" if isinstance(field.widget, forms.Select) else "form-control"
+
+
+class CollectionAcceptForm(forms.Form):
+    notes = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 2, "class": "form-control", "placeholder": "Optional acceptance notes (e.g. preparation or logistics instructions)..."}),
+        required=False,
+        label="Acceptance notes",
+    )
+
+
+class CollectionRejectForm(forms.Form):
+    rejection_reason = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 3, "class": "form-control", "placeholder": "State the reason for rejecting this collection request..."}),
+        required=True,
+        label="Rejection reason",
+    )
+
+
+class CollectionScheduleForm(forms.Form):
+    scheduled_for = forms.DateTimeField(
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-control"}),
+        required=True,
+        label="Scheduled pickup date and time",
+    )
+    notes = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 2, "class": "form-control", "placeholder": "Optional instructions for pickup crew or institution..."}),
+        required=False,
+        label="Pickup notes",
+    )
+
+    def clean_scheduled_for(self):
+        scheduled_for = self.cleaned_data.get("scheduled_for")
+        if scheduled_for and scheduled_for < timezone.now():
+            raise forms.ValidationError("Scheduled pickup time cannot be in the past.")
+        return scheduled_for
+
+
+class CollectionCompleteForm(forms.Form):
+    final_collected_quantity_kg = forms.DecimalField(
+        min_value=Decimal("0.01"),
+        max_digits=12,
+        decimal_places=2,
+        required=True,
+        label="Final collected quantity (kg)",
+        widget=forms.NumberInput(attrs={"step": "0.01", "class": "form-control", "placeholder": "Enter measured weight in kilograms"}),
+        help_text="Enter the final verified weight of paper waste collected from the institution.",
+    )
+    notes = forms.CharField(
+        widget=forms.Textarea(attrs={"rows": 2, "class": "form-control", "placeholder": "Optional notes regarding paper condition, weighing, or receipt..."}),
+        required=False,
+        label="Completion notes",
+    )
+
 
