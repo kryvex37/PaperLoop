@@ -1,45 +1,65 @@
 {% extends "base.html" %}
 {% block title %}Recommended Recyclers for Listing · PaperLoop{% endblock %}
 {% block content %}
-<div class="container py-4" style="max-width: 960px;">
-  <!-- Back link to institution dashboard -->
-  <a class="link-success text-decoration-none small d-inline-flex align-items-center gap-1 mb-3" href="{% url 'accounts:institution_dashboard' %}">
-    ← Back to dashboard
-  </a>
+<div class="container py-4 py-lg-5" style="max-width: 1040px;">
+  <!-- Back link & breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'accounts:institution_dashboard' %}" class="text-success text-decoration-none">Institution Dashboard</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Partner Matching</li>
+    </ol>
+  </nav>
 
   <!-- Header -->
-  <div class="mb-4">
-    <p class="text-uppercase text-success fw-bold small mb-1 tracking-wide">PaperLoop Partner Matching</p>
-    <h1 class="h2 mb-1 fw-bold text-dark">Recommended Recyclers for Listing</h1>
-    <p class="text-secondary mb-0">Verified recycling partners matched based on accepted paper categories, capacity, and service area.</p>
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-4">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <span class="badge text-bg-success-subtle text-success border border-success-subtle px-2 py-1 small fw-semibold text-uppercase">AI Recommendation Engine</span>
+      </div>
+      <h1 class="h2 mb-1 fw-bold text-dark">Recommended Recyclers for Listing</h1>
+      <p class="text-secondary mb-0">
+        AI and rule-based matching ranked by operational capacity, service area proximity, accepted paper grades, and fulfillment reliability.
+      </p>
+    </div>
+    <div>
+      <a class="btn btn-outline-secondary" href="{% url 'accounts:institution_dashboard' %}">← Back to Dashboard</a>
+    </div>
   </div>
 
-  <!-- Listing Summary Bar -->
-  <div class="card border-0 shadow-sm mb-4 bg-light-subtle">
+  <!-- Listing Context Summary Card -->
+  <div class="card border-0 shadow-sm mb-4 bg-light-subtle border-start border-4 border-success">
     <div class="card-body p-3 p-md-4">
-      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-        <h2 class="h5 mb-0 fw-bold text-dark">{{ listing.get_paper_type_display }}</h2>
-        <span class="badge text-bg-success">{{ listing.get_status_display }}</span>
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div class="d-flex align-items-center gap-2">
+          <span class="fs-4">📄</span>
+          <h2 class="h5 mb-0 fw-bold text-dark">{{ listing.get_paper_type_display }}</h2>
+        </div>
+        <span class="badge rounded-pill text-bg-success px-3 py-2">{{ listing.get_status_display }}</span>
       </div>
-      <div class="row g-2 text-secondary small">
-        <div class="col-12 col-sm-3">
-          <strong class="text-dark">Paper Category:</strong> {{ listing.get_paper_type_display }}
+      <div class="row g-3">
+        <div class="col-6 col-md-3">
+          <div class="small text-secondary">Material Category</div>
+          <div class="fw-semibold text-dark">{{ listing.get_paper_type_display }}</div>
         </div>
-        <div class="col-12 col-sm-3">
-          <strong class="text-dark">Quantity:</strong> {{ listing.quantity_kg }} kg
+        <div class="col-6 col-md-3">
+          <div class="small text-secondary">Listing Quantity</div>
+          <div class="fs-5 fw-bold text-success">{{ listing.quantity_kg }} kg</div>
         </div>
-        <div class="col-12 col-sm-3">
-          <strong class="text-dark">Pickup City:</strong> {{ listing.pickup_city|default:"Not specified" }}{% if listing.pickup_country %}, {{ listing.pickup_country }}{% endif %}
+        <div class="col-6 col-md-3">
+          <div class="small text-secondary">Pickup City</div>
+          <div class="fw-semibold text-dark">{{ listing.pickup_city|default:"Not specified" }}{% if listing.pickup_country %}, {{ listing.pickup_country }}{% endif %}</div>
         </div>
-        <div class="col-12 col-sm-3">
-          <strong class="text-dark">Collection Dates:</strong>
-          {% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible{% endif %}
-          {% if listing.available_until %} to {{ listing.available_until|date:"M j, Y" }}{% endif %}
+        <div class="col-6 col-md-3">
+          <div class="small text-secondary">Preferred Collection Window</div>
+          <div class="small text-dark fw-medium">
+            {% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible{% endif %}
+            {% if listing.available_until %} to {{ listing.available_until|date:"M j, Y" }}{% endif %}
+          </div>
         </div>
       </div>
       {% if listing.category_details %}
-        <div class="small text-secondary mt-2">
-          <strong class="text-dark">Details:</strong> {{ listing.category_details }}
+        <div class="small text-secondary mt-3 pt-2 border-top">
+          <strong class="text-dark">Special notes / packaging:</strong> {{ listing.category_details }}
         </div>
       {% endif %}
     </div>
@@ -47,64 +67,130 @@
 
   <!-- Recommendations List -->
   {% if recommendations %}
-    <div class="d-flex flex-column gap-3">
+    <div class="d-flex flex-column gap-4">
       {% for rec in recommendations %}
-        <div class="card border-0 shadow-sm">
+        <div class="card border-0 shadow-sm rounded-3 overflow-hidden position-relative">
+          <!-- Top progress bar for match score -->
+          <div class="progress" style="height: 4px;" role="progressbar" aria-valuenow="{{ rec.match_score }}" aria-valuemin="0" aria-valuemax="100">
+            <div class="progress-bar bg-success" style="width: {{ rec.match_score }}%;"></div>
+          </div>
+
           <div class="card-body p-3 p-md-4">
-            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-2 mb-3">
+            <!-- Header Section -->
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3 mb-3">
               <div>
-                <h3 class="h5 mb-1 fw-bold text-dark">{{ rec.partner.user.organization_name }}</h3>
-                <span class="badge bg-success-subtle text-success border border-success-subtle">Verified Partner</span>
-                {% if rec.partner.user.contact_name %}
-                  <span class="small text-secondary ms-2">Contact: <strong class="text-dark">{{ rec.partner.user.contact_name }}</strong></span>
-                {% endif %}
-                {% if rec.partner.user.email %}
-                  <span class="small text-secondary ms-2">({{ rec.partner.user.email }})</span>
-                {% endif %}
-                {% if rec.partner.user.phone %}
-                  <span class="small text-secondary ms-2">· {{ rec.partner.user.phone }}</span>
-                {% endif %}
+                <div class="d-flex align-items-center gap-2 mb-1">
+                  <h3 class="h5 mb-0 fw-bold text-dark">{{ rec.partner.user.organization_name }}</h3>
+                  <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-2 py-1 small">
+                    ✓ Verified Partner
+                  </span>
+                </div>
+                <p class="text-secondary small mb-0">
+                  {% if rec.partner.user.contact_name %}
+                    <span>Contact: <strong class="text-dark">{{ rec.partner.user.contact_name }}</strong></span>
+                  {% endif %}
+                  {% if rec.partner.user.email %}
+                    <span class="mx-1">·</span><span>{{ rec.partner.user.email }}</span>
+                  {% endif %}
+                  {% if rec.partner.user.phone %}
+                    <span class="mx-1">·</span><span>{{ rec.partner.user.phone }}</span>
+                  {% endif %}
+                </p>
               </div>
+
+              <!-- Score Indicator Badge -->
               <div class="text-sm-end">
-                <span class="badge text-bg-success fs-6 px-3 py-2 rounded-pill">{{ rec.match_score }}% Match</span>
+                <div class="badge rounded-pill fs-6 px-3 py-2 text-bg-success shadow-sm">
+                  🎯 {{ rec.match_score }}% Match
+                </div>
                 {% if rec.ai_relevance != None %}
-                  <div class="small text-secondary mt-1">Model relevance: {{ rec.ai_relevance|floatformat:2 }}</div>
+                  <div class="small text-secondary mt-1">
+                    AI Rank Score: <strong class="text-dark">{{ rec.ai_relevance|floatformat:2 }}</strong>
+                  </div>
                 {% endif %}
               </div>
             </div>
 
-            <div class="row g-3 mb-3">
-              <div class="col-12 col-md-7">
-                <div class="small fw-semibold text-secondary mb-2">Match Explainability:</div>
-                <ul class="list-unstyled mb-0">
-                  {% for reason in rec.match_factors %}
-                    <li class="small text-success mb-1 fw-medium">{{ reason }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-              <div class="col-12 col-md-5 border-start-md ps-md-3">
-                <div class="small fw-semibold text-secondary mb-2">Operational Details:</div>
-                <div class="small mb-1">
-                  <span class="text-secondary">Available Capacity:</span>
-                  <strong>{% if rec.available_capacity_kg == None %}Flexible{% else %}{{ rec.available_capacity_kg }} kg{% endif %}</strong>
+            <!-- Structured Reasoning & Factors Cards (FR-08 UI Polish) -->
+            <div class="row g-2 mb-3">
+              <!-- Factor 1: Material Grade -->
+              <div class="col-6 col-md-3">
+                <div class="border rounded-2 p-2 bg-light-subtle h-100">
+                  <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                    <span>✓</span> Material Grade
+                  </div>
+                  <div class="small fw-bold text-dark mt-1">{{ listing.get_paper_type_display }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Accepted by partner</div>
                 </div>
-                <div class="small">
-                  <span class="text-secondary">Service Area:</span>
-                  <span>{{ rec.partner.service_area|default:"Not specified" }}</span>
+              </div>
+
+              <!-- Factor 2: Capacity -->
+              <div class="col-6 col-md-3">
+                <div class="border rounded-2 p-2 bg-light-subtle h-100">
+                  <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                    <span>✓</span> Capacity Match
+                  </div>
+                  <div class="small fw-bold text-dark mt-1">
+                    {% if rec.available_capacity_kg == None %}Flexible{% else %}{{ rec.available_capacity_kg }} kg avail.{% endif %}
+                  </div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Covers {{ listing.quantity_kg }} kg request</div>
+                </div>
+              </div>
+
+              <!-- Factor 3: Service Area / Location -->
+              <div class="col-6 col-md-3">
+                <div class="border rounded-2 p-2 bg-light-subtle h-100">
+                  <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                    <span>✓</span> Service Area
+                  </div>
+                  <div class="small fw-bold text-dark mt-1 text-truncate">
+                    {{ rec.partner.service_area|default:listing.pickup_city }}
+                  </div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Servicing {{ listing.pickup_city }}</div>
+                </div>
+              </div>
+
+              <!-- Factor 4: Reliability / History -->
+              <div class="col-6 col-md-3">
+                <div class="border rounded-2 p-2 bg-light-subtle h-100">
+                  <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
+                    <span>✓</span> Partner History
+                  </div>
+                  <div class="small fw-bold text-dark mt-1">
+                    {% if rec.partner.average_rating %}⭐ {{ rec.partner.average_rating|floatformat:1 }}/5.0{% else %}Verified Partner{% endif %}
+                  </div>
+                  <div class="text-muted" style="font-size: 0.75rem;">Platform vetted credentials</div>
                 </div>
               </div>
             </div>
 
-            <!-- Request Collection Form -->
+            <!-- Detailed Explainability List -->
+            <div class="bg-success-subtle bg-opacity-25 rounded-2 p-3 mb-3 border border-success-subtle">
+              <div class="small fw-bold text-success text-uppercase mb-1" style="letter-spacing: 0.5px;">
+                AI Reasoning &amp; Decision Attribution:
+              </div>
+              <ul class="list-unstyled mb-0 row g-1">
+                {% for factor in rec.match_factors %}
+                  <li class="col-12 col-md-6 small text-secondary d-flex align-items-center gap-2">
+                    <span class="text-success fw-bold">✓</span>
+                    <span>{{ factor }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            </div>
+
+            <!-- Request Collection Action Form -->
             <form method="post" action="{% url 'accounts:select_recommended_partner' listing.pk %}" class="pt-3 border-top">
               {% csrf_token %}
               <input type="hidden" name="partner_id" value="{{ rec.partner.pk }}">
               <div class="row g-2 align-items-center">
                 <div class="col-12 col-md-8">
-                  <input type="text" name="notes" class="form-control form-control-sm" placeholder="Pickup notes or coordination instructions (optional)">
+                  <input type="text" name="notes" class="form-control" placeholder="Add pickup notes, loading dock instructions, or preferred hours (optional)">
                 </div>
                 <div class="col-12 col-md-4 text-md-end">
-                  <button type="submit" class="btn btn-sm btn-success w-100">Select &amp; Request Collection</button>
+                  <button type="submit" class="btn btn-success w-100 fw-medium">
+                    Select &amp; Request Collection →
+                  </button>
                 </div>
               </div>
             </form>
@@ -113,16 +199,21 @@
       {% endfor %}
     </div>
   {% else %}
-    <!-- No Recommendations Alert -->
-    <div class="alert alert-info border-0 shadow-sm p-4 text-center my-3" role="alert">
-      <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px" aria-hidden="true">
-        <span class="fs-4">🔍</span>
+    <!-- No Recommendations Empty State Card -->
+    <div class="card border-0 shadow-sm p-4 text-center my-3">
+      <div class="card-body py-5">
+        <div class="rounded-circle bg-info-subtle text-info-emphasis d-inline-flex align-items-center justify-content-center mb-3" style="width:64px;height:64px" aria-hidden="true">
+          <span class="fs-3">🔍</span>
+        </div>
+        <h3 class="h4 card-title mb-2 fw-bold text-dark">No Matching Recyclers Found</h3>
+        <p class="text-secondary mx-auto mb-4" style="max-width:520px">
+          No verified recycling partners currently service this category/area. As new recycling partners register and configure their operational service areas and capacities, matching recommendations will appear here automatically.
+        </p>
+        <div class="d-inline-flex gap-2">
+          <a class="btn btn-outline-success px-4" href="{% url 'accounts:partner_directory' %}">Browse Partner Directory</a>
+          <a class="btn btn-success px-4" href="{% url 'accounts:institution_dashboard' %}">Return to Dashboard</a>
+        </div>
       </div>
-      <h3 class="h5 alert-heading mb-2 fw-bold">No Matching Recyclers Found</h3>
-      <p class="text-secondary mx-auto mb-3" style="max-width:500px">
-        No verified recycling partners currently service this category/area. As new recycling partners register and configure their operational service areas and capacities, matching recommendations will appear here automatically.
-      </p>
-      <a class="btn btn-outline-success btn-sm px-4" href="{% url 'accounts:institution_dashboard' %}">Return to Dashboard</a>
     </div>
   {% endif %}
 </div>

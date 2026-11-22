@@ -15,6 +15,12 @@ from .models import (
     WasteRecord,
 )
 
+# Custom PaperLoop Admin Branding & Polish
+admin.site.site_header = "PaperLoop Administration"
+admin.site.site_title = "PaperLoop Admin Portal"
+admin.site.index_title = "Marketplace Overview & Verification Operations"
+
+
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):

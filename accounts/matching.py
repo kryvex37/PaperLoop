@@ -88,10 +88,40 @@ def get_recommended_partners(listing):
             capacity_reason = f"✓ Capacity ({capacity} kg available) covers listing"
         location_score = 30 if (listing.pickup_city or "").casefold() in (partner.service_area or "").casefold() else 15
         match_score = min(98, 40 + 30 + location_score)
+
+        # Structured factor breakdowns for clean visual rendering (FR-05/FR-08 UI polish)
+        factor_breakdown = {
+            "capacity": {
+                "label": "Capacity Match",
+                "status": "High" if capacity is None or capacity >= (listing.quantity_kg * Decimal("2")) else "Sufficient",
+                "detail": f"{capacity} kg available" if capacity is not None else "Flexible monthly capacity",
+                "passed": True,
+            },
+            "location": {
+                "label": "Location & Service Area",
+                "status": "In Service Area" if location_score == 30 else "Regional Coverage",
+                "detail": f"Services {partner.service_area or area_label}",
+                "passed": True,
+            },
+            "category": {
+                "label": "Material Grade Acceptance",
+                "status": "Verified Match",
+                "detail": f"Accepts {category_label}",
+                "passed": True,
+            },
+            "history": {
+                "label": "Verification & History",
+                "status": "Verified Partner",
+                "detail": f"Rating {partner.average_rating:.1f}/5.0" if partner.average_rating else "Verified recycling partner",
+                "passed": True,
+            },
+        }
+
         recommendations.append({
             "partner": partner,
             "match_score": match_score,
             "available_capacity_kg": capacity,
+            "factor_breakdown": factor_breakdown,
             "match_reasons": [
                 f"✓ Accepts {category_label}",
                 capacity_reason,
