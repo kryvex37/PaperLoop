@@ -10,7 +10,13 @@
       <h1 class="h2 mb-1">{{ user.organization_name }}</h1>
       <p class="dashboard-welcome-subtitle">Turn surplus paper into a smoother, more sustainable collection process.</p>
     </div>
-    <div class="d-flex flex-wrap gap-2 dashboard-actions"><a class="btn btn-outline-success" href="{% url 'accounts:institution_profile' %}">Institution profile</a><a class="btn btn-outline-success" href="{% url 'accounts:bulk_aggregation' %}">Bulk pickup opportunities</a><a class="btn btn-outline-success" href="{% url 'accounts:partner_directory' %}">Browse partners</a><a class="btn btn-success" href="{% url 'accounts:listing_create' %}">＋ Create paper listing</a></div>
+    <div class="d-flex flex-wrap gap-2 dashboard-actions">
+      <a class="btn btn-outline-success" href="{% url 'accounts:transaction_history' %}">Recycling Records &amp; Impact</a>
+      <a class="btn btn-outline-success" href="{% url 'accounts:institution_profile' %}">Institution profile</a>
+      <a class="btn btn-outline-success" href="{% url 'accounts:bulk_aggregation' %}">Bulk pickup opportunities</a>
+      <a class="btn btn-outline-success" href="{% url 'accounts:partner_directory' %}">Browse partners</a>
+      <a class="btn btn-success" href="{% url 'accounts:listing_create' %}">＋ Create paper listing</a>
+    </div>
   </div>
 
   <div class="row g-3 mb-4 dashboard-metrics">

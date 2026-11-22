@@ -17,9 +17,10 @@
         {% endif %}
       </p>
     </div>
-    <div>
-      <a class="btn btn-outline-secondary px-3 me-1" href="{% url 'accounts:partner_profile_detail' %}">View Profile</a>
-      <a class="btn btn-outline-success px-4" href="{% url 'accounts:partner_profile' %}">Edit Profile &amp; Capacity</a>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-success px-3" href="{% url 'accounts:transaction_history' %}">Transaction Records</a>
+      <a class="btn btn-outline-secondary px-3" href="{% url 'accounts:partner_profile_detail' %}">View Profile</a>
+      <a class="btn btn-outline-success px-3" href="{% url 'accounts:partner_profile' %}">Edit Profile &amp; Capacity</a>
     </div>
   </div>
 

@@ -309,3 +309,9 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"Transaction #{self.pk} ({self.quantity_kg} kg)"
+
+    @property
+    def impact_metrics(self):
+        from .impact import calculate_impact_metrics
+        return calculate_impact_metrics(self.quantity_kg)
+

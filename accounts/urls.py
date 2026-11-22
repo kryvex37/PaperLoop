@@ -44,4 +44,7 @@ urlpatterns = [
     path("collections/<int:collection_id>/schedule/", views.partner_schedule_collection, name="partner_schedule_collection"),
     path("collections/<int:collection_id>/complete/", views.partner_complete_collection, name="partner_complete_collection"),
     path("collections/<int:collection_id>/cancel/", views.institution_cancel_collection, name="institution_cancel_collection"),
+    path("transactions/", views.transaction_history, name="transaction_history"),
+    path("transactions/<int:transaction_id>/", views.transaction_detail, name="transaction_detail"),
+    path("transactions/<int:transaction_id>/record/", views.digital_record_view, name="digital_record"),
 ]

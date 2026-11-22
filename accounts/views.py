@@ -574,6 +574,127 @@ def institution_cancel_collection(request, collection_id):
     return redirect("accounts:institution_dashboard")
 
 
+@login_required
+def transaction_history(request):
+    """
+    FR-11: Transaction history management for completed recycling activities.
+    Scoped by the current user's role (Institution or Partner).
+    """
+    from .impact import calculate_impact_metrics
+
+    if request.user.role == UserRole.EDUCATIONAL_INSTITUTION:
+        txns = Transaction.objects.filter(
+            collection__listing__institution__user=request.user
+        ).select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ).order_by("-completed_at")
+    elif request.user.role == UserRole.RECYCLING_PARTNER:
+        txns = Transaction.objects.filter(
+            collection__partner__user=request.user
+        ).select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ).order_by("-completed_at")
+    elif request.user.is_superuser:
+        txns = Transaction.objects.all().select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ).order_by("-completed_at")
+    else:
+        return render(request, "403.html", status=403)
+
+    total_weight = txns.aggregate(total=Sum("quantity_kg"))["total"] or Decimal("0")
+    total_impact = calculate_impact_metrics(total_weight)
+
+    return render(
+        request,
+        "accounts/transaction_history.html",
+        {
+            "transactions": txns,
+            "total_weight": total_weight,
+            "total_impact": total_impact,
+            "transaction_count": txns.count(),
+        },
+    )
+
+
+@login_required
+def transaction_detail(request, transaction_id):
+    """
+    Detailed transaction view with collection context and impact breakdown.
+    """
+    txn = get_object_or_404(
+        Transaction.objects.select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ),
+        pk=transaction_id,
+    )
+    is_owner_institution = (
+        request.user.role == UserRole.EDUCATIONAL_INSTITUTION
+        and txn.collection.listing.institution.user_id == request.user.id
+    )
+    is_assigned_partner = (
+        request.user.role == UserRole.RECYCLING_PARTNER
+        and txn.collection.partner.user_id == request.user.id
+    )
+    if not (is_owner_institution or is_assigned_partner or request.user.is_superuser):
+        return render(request, "403.html", status=403)
+
+    return render(
+        request,
+        "accounts/transaction_detail.html",
+        {
+            "transaction": txn,
+            "collection": txn.collection,
+            "listing": txn.collection.listing,
+            "impact": txn.impact_metrics,
+            "is_owner_institution": is_owner_institution,
+            "is_assigned_partner": is_assigned_partner,
+        },
+    )
+
+
+@login_required
+def digital_record_view(request, transaction_id):
+    """
+    FR-12: Digital recycling certificate / verifiable impact record.
+    Clean, print-friendly and formal digital record of completed recycling activity.
+    """
+    txn = get_object_or_404(
+        Transaction.objects.select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ),
+        pk=transaction_id,
+    )
+    is_owner_institution = (
+        request.user.role == UserRole.EDUCATIONAL_INSTITUTION
+        and txn.collection.listing.institution.user_id == request.user.id
+    )
+    is_assigned_partner = (
+        request.user.role == UserRole.RECYCLING_PARTNER
+        and txn.collection.partner.user_id == request.user.id
+    )
+    if not (is_owner_institution or is_assigned_partner or request.user.is_superuser):
+        return render(request, "403.html", status=403)
+
+    return render(
+        request,
+        "accounts/digital_record.html",
+        {
+            "transaction": txn,
+            "collection": txn.collection,
+            "listing": txn.collection.listing,
+            "institution": txn.collection.listing.institution,
+            "partner": txn.collection.partner,
+            "impact": txn.impact_metrics,
+        },
+    )
+
+
 def permission_denied(request, exception=None):
+
     return render(request, "403.html", status=403)
 

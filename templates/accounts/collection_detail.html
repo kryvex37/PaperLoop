@@ -380,8 +380,12 @@
                   Paper waste has been collected and recorded ({{ collection.final_collected_quantity_kg }} kg).
                 </p>
                 {% if collection.transaction %}
-                  <div class="badge bg-light text-dark border p-2 mb-2">
+                  <div class="badge bg-light text-dark border p-2 mb-2 d-block">
                     Ref: {{ collection.transaction.reference }}
+                  </div>
+                  <div class="d-flex justify-content-center gap-2 mt-2">
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'accounts:transaction_detail' collection.transaction.pk %}">Transaction Details</a>
+                    <a class="btn btn-sm btn-success" href="{% url 'accounts:digital_record' collection.transaction.pk %}">🌱 Digital Record</a>
                   </div>
                 {% endif %}
               </div>
