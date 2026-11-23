@@ -26,7 +26,7 @@ Verification policy assumption: registrations remain enabled for authentication 
 6. Start the development server: `python manage.py runserver`.
 7. Open `/accounts/register/` to register an institution or partner, `/accounts/login/` to sign in, or `/admin/` for the Django administration site.
 
-Set `DATABASE_URL` to a PostgreSQL connection string, or set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, and optional `DB_SSLMODE`. A URL can include `?sslmode=require` when your database provider requires TLS. Django uses PostgreSQL when configured and local SQLite as a convenient fallback.
+**Database:** PaperLoop uses PostgreSQL exclusively. Copying `.env.example` to `.env` with the `DB_*` values set (defaults point at `paperloop_db` on `127.0.0.1:5432`) configures PostgreSQL. If `DB_NAME` is left empty, Django silently falls back to a local `db.sqlite3` file — this is not recommended. You can also set `DATABASE_URL` to a `postgres://` or `postgresql://` connection string instead of the individual `DB_*` fields. A URL can include `?sslmode=require` when your database provider requires TLS.
 
 ## AI pilot pipeline
 
