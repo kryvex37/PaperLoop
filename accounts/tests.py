@@ -347,7 +347,9 @@ class TestRecyclerMatchingAndSelectionFR08(TestCase):
         # Verify matching partner details appear in the page
         self.assertContains(response, "Dhaka Paper Recyclers")
         self.assertContains(response, "✓ Accepts Office paper")
-        self.assertContains(response, "98% Match")
+        self.assertContains(response, "Eligibility-based recommendations")
+        self.assertContains(response, "Service-area fit: 98 / 100")
+        self.assertContains(response, "Rule-based ordering")
 
     def test_institution_user_can_select_recommended_partner(self):
         """
@@ -939,7 +941,11 @@ class TemplateIntegrationTest(TestCase):
         self.assertContains(response, "EcoCycle Ltd")
         self.assertContains(response, "Mark Robinson")
         self.assertContains(response, "text-bg-success")
-        self.assertContains(response, "% Match")
+        self.assertContains(response, "Eligibility-based recommendations")
+        self.assertContains(response, "Service-area fit: 98 / 100")
+        self.assertContains(response, "Rule-based ordering")
+        self.assertContains(response, "New to marketplace")
+        self.assertContains(response, "No resolved pickup history; neutral fulfillment prior used")
         self.assertContains(response, "✓ Accepts Office paper")
         self.assertContains(response, "✓ Capacity (5000.00 kg/mo) covers listing")
 

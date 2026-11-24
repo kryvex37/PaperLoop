@@ -1,0 +1,58 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('PaperLoop Administration') }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-yEPZ7jP9S0QKiUQ0m3jjsO4ProIW7wvR9gXkI7JOGa2XVsw53Yke2bsdkBbjmmiX" crossorigin="anonymous">
+  <style>
+    #content-main { width: 100%; }
+    .paperloop-admin-card { min-height: 100%; }
+    .paperloop-admin-card .list-group-item { overflow-wrap: anywhere; }
+    .paperloop-admin-card .list-group-item:hover { background: #f0fdf4; }
+  </style>
+{% endblock %}
+
+{% block breadcrumbs %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0 py-3">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-4">
+    <div>
+      <p class="text-uppercase text-success fw-bold small mb-1">PaperLoop operations</p>
+      <h1 class="h2 mb-1">Marketplace administration</h1>
+      <p class="text-body-secondary mb-0">Review organizations and manage listings, collections, and recycling records.</p>
+    </div>
+  </div>
+
+  {% if app_list %}
+    <div class="row g-3">
+      {% for app in app_list %}
+        <div class="col-12 col-md-6 col-xxl-4">
+          <section class="card shadow-sm paperloop-admin-card" aria-labelledby="admin-app-{{ forloop.counter }}">
+            <div class="card-header bg-success-subtle border-bottom-0 py-3">
+              <h2 class="h5 mb-0" id="admin-app-{{ forloop.counter }}">{{ app.name }}</h2>
+            </div>
+            <div class="list-group list-group-flush">
+              {% for model in app.models %}
+                {% if model.admin_url %}
+                  <div class="list-group-item d-flex justify-content-between align-items-center gap-2 py-3">
+                    <a class="fw-semibold text-decoration-none" href="{{ model.admin_url }}">{{ model.name }}</a>
+                    <span class="d-flex gap-2 flex-shrink-0">
+                      {% if model.add_url %}<a class="btn btn-sm btn-outline-success" href="{{ model.add_url }}">Add</a>{% endif %}
+                      {% if model.view_only %}<span class="badge text-bg-light border">View</span>{% endif %}
+                    </span>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </section>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="alert alert-info" role="status">You do not have permission to manage any PaperLoop records.</div>
+  {% endif %}
+</div>
+{% endblock %}

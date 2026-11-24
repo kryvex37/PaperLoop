@@ -122,7 +122,7 @@
                   </td>
                   <td class="text-end pe-3 pe-md-4">
                     {% with latest_col=listing.collections.first %}
-                      {% if not listing.has_collection and listing.status == 'available' %}
+                      {% if not listing.has_collection_activity and listing.status == 'available' %}
                         <div class="d-inline-flex gap-2">
                           <a class="btn btn-sm btn-success" href="{% url 'accounts:listing_recommendations' listing.pk %}">Find Recycler</a>
                           <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:listing_edit' listing.pk %}">Edit</a>
@@ -131,7 +131,7 @@
                             <button class="btn btn-sm btn-outline-secondary" type="submit" aria-label="Withdraw {{ listing.get_paper_type_display }} listing">Withdraw</button>
                           </form>
                         </div>
-                      {% elif not listing.has_collection and listing.status == 'draft' %}
+                      {% elif not listing.has_collection_activity and listing.status == 'draft' %}
                         <div class="d-inline-flex gap-2">
                           <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:listing_edit' listing.pk %}">Edit</a>
                           <form method="post" action="{% url 'accounts:listing_cancel' listing.pk %}">
@@ -148,6 +148,11 @@
                               <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Cancel this collection request?');">Cancel</button>
                             </form>
                           {% endif %}
+                        </div>
+                      {% elif listing.status == 'available' and listing.has_collection_activity %}
+                        <div class="d-inline-flex flex-column align-items-end gap-1">
+                          <a class="btn btn-sm btn-success" href="{% url 'accounts:listing_recommendations' listing.pk %}">Find Recycler</a>
+                          <span class="small text-secondary">Editing and withdrawal are locked after collection activity.</span>
                         </div>
                       {% elif latest_col and latest_col.status == 'collected' %}
                         <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:collection_detail' latest_col.pk %}">View Details</a>

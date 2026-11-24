@@ -67,7 +67,12 @@
     </div>
     <div class="card-footer bg-white border-0 px-3 px-md-4 px-lg-5 pb-4 d-flex flex-column flex-sm-row justify-content-end gap-2">
       <a class="btn btn-light border" href="{% url 'accounts:institution_dashboard' %}">Cancel</a>
-      <button class="btn btn-success px-4" type="submit">{% if listing %}Save changes{% else %}Publish listing{% endif %}</button>
+      <button class="btn btn-outline-success px-4" type="submit" name="listing_action" value="draft">Save as draft</button>
+      {% if listing and listing.status == "available" %}
+        <button class="btn btn-success px-4" type="submit" name="listing_action" value="save">Save changes</button>
+      {% else %}
+        <button class="btn btn-success px-4" type="submit" name="listing_action" value="publish">Publish listing</button>
+      {% endif %}
     </div>
   </form>
 </div>

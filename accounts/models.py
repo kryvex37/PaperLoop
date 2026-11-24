@@ -72,6 +72,11 @@ class User(AbstractUser):
         "self", null=True, blank=True, on_delete=models.SET_NULL,
         related_name="verified_accounts",
     )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="reviewed_accounts",
+    )
     verification_notes = models.TextField(blank=True)
 
     USERNAME_FIELD = "email"

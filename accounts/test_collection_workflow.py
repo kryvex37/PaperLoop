@@ -1,7 +1,7 @@
 from decimal import Decimal
 from datetime import timedelta
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TransactionTestCase
 from django.urls import reverse
 from django.utils import timezone
 
@@ -18,7 +18,7 @@ from accounts.models import (
 User = get_user_model()
 
 
-class CollectionWorkflowFR09FR10Tests(TestCase):
+class CollectionWorkflowFR09FR10Tests(TransactionTestCase):
     """
     Comprehensive tests for:
     - FR-09: Collection Request submission, accept/reject, pickup scheduling, and status updates.
@@ -220,6 +220,28 @@ class CollectionWorkflowFR09FR10Tests(TestCase):
         collection.refresh_from_db()
         self.assertEqual(collection.status, Collection.Status.ACCEPTED)
 
+    def test_partner_cannot_schedule_before_accepting_request(self):
+        collection = Collection.objects.create(
+            listing=self.listing,
+            partner=self.partner_profile,
+            status=Collection.Status.REQUESTED,
+            estimated_quantity_kg=self.listing.quantity_kg,
+        )
+        pickup_time = timezone.now() + timedelta(days=2)
+
+        self.client.force_login(self.partner_user)
+        response = self.client.post(
+            reverse("accounts:partner_schedule_collection", args=[collection.pk]),
+            {"scheduled_for": pickup_time.strftime("%Y-%m-%dT%H:%M")},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        collection.refresh_from_db()
+        self.assertEqual(collection.status, Collection.Status.REQUESTED)
+        self.assertIsNone(collection.scheduled_for)
+
+
     def test_complete_collection_records_final_quantity_and_creates_transaction(self):
         """FR-09 & FR-10: Completing collection records final quantity, updates listing to COMPLETED, and creates Transaction."""
         collection = Collection.objects.create(
@@ -279,6 +301,31 @@ class CollectionWorkflowFR09FR10Tests(TestCase):
         collection.refresh_from_db()
         self.assertEqual(collection.status, Collection.Status.SCHEDULED)
         self.assertIsNone(collection.final_collected_quantity_kg)
+
+    def test_partner_cannot_complete_before_pickup_is_scheduled(self):
+        collection = Collection.objects.create(
+            listing=self.listing,
+            partner=self.partner_profile,
+            status=Collection.Status.ACCEPTED,
+            estimated_quantity_kg=self.listing.quantity_kg,
+        )
+        self.listing.status = PaperListing.Status.RESERVED
+        self.listing.save()
+
+        self.client.force_login(self.partner_user)
+        response = self.client.post(
+            reverse("accounts:partner_complete_collection", args=[collection.pk]),
+            {"final_collected_quantity_kg": "620.00"},
+            follow=True,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        collection.refresh_from_db()
+        self.assertEqual(collection.status, Collection.Status.ACCEPTED)
+        self.assertIsNone(collection.final_collected_quantity_kg)
+        self.assertFalse(Transaction.objects.filter(collection=collection).exists())
+        self.listing.refresh_from_db()
+        self.assertEqual(self.listing.status, PaperListing.Status.RESERVED)
 
     def test_institution_can_cancel_pending_request(self):
         """FR-09: Institution can cancel request while in REQUESTED status."""

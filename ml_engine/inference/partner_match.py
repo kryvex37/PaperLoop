@@ -36,7 +36,6 @@ def explain_ranking(model, scaled_features, raw_features):
     """Attribute score changes by replacing one feature with a neutral value."""
     neutral = torch.tensor([.25, .8, 1., .85, .8, 1 / 1.5], dtype=torch.float32)
     with torch.inference_mode():
-        base = float(model(neutral.unsqueeze(0))[0])
         contributions = []
         for index, name in enumerate(RANK_FEATURES):
             perturbed = scaled_features.clone()
@@ -44,13 +43,40 @@ def explain_ranking(model, scaled_features, raw_features):
             delta = float(model(scaled_features.unsqueeze(0))[0] - model(perturbed.unsqueeze(0))[0])
             contributions.append((name, delta))
     total = sum(abs(value) for _, value in contributions) or 1.0
+    history_count = int(raw_features.get("history_observation_count", 0))
+    if history_count:
+        history_text = (
+            f"{raw_features.get('history_completed_count', 0)} of {history_count} resolved pickups completed; "
+            f"smoothed estimate {raw_features['historical_fulfillment_rate']:.0%}"
+        )
+    elif raw_features.get("history_prior_used"):
+        history_text = "Neutral fulfillment prior used; no resolved pickup history yet"
+    else:
+        history_text = (
+            f"Stored fulfillment estimate {raw_features['historical_fulfillment_rate']:.0%}; "
+            "no resolved pickup history yet"
+        )
+    rating_text = (
+        "Neutral rating prior used; no partner ratings recorded"
+        if raw_features.get("rating_prior_used") else
+        f"{raw_features['average_rating']:.1f}/5 average rating"
+    )
+    price_text = (
+        "Neutral price prior used; no price comparisons recorded"
+        if raw_features.get("price_prior_used") else
+        f"Price competitiveness {raw_features['price_competitiveness']:.2f}x local market"
+    )
     feature_text = {
         "distance_km": f"Within {raw_features['distance_km']:.1f} km",
-        "capacity_utilization_ratio": f"Capacity use is {raw_features['capacity_utilization_ratio']:.0%} of available capacity",
+        "capacity_utilization_ratio": (
+            "Flexible capacity; no fixed utilization limit"
+            if raw_features.get("capacity_is_flexible") else
+            f"Capacity use is {raw_features['capacity_utilization_ratio']:.0%} of available capacity"
+        ),
         "paper_grade_match": "Paper type is accepted" if raw_features["paper_grade_match"] >= 1 else "Paper type is not confirmed",
-        "historical_fulfillment_rate": f"{raw_features['historical_fulfillment_rate']:.0%} historical fulfillment",
-        "average_rating": f"{raw_features['average_rating']:.1f}/5 average rating",
-        "price_competitiveness": f"Price competitiveness {raw_features['price_competitiveness']:.2f}x local market",
+        "historical_fulfillment_rate": history_text,
+        "average_rating": rating_text,
+        "price_competitiveness": price_text,
     }
     factors = []
     for name, delta in sorted(contributions, key=lambda pair: abs(pair[1]), reverse=True):
@@ -59,6 +85,13 @@ def explain_ranking(model, scaled_features, raw_features):
         pct = abs(delta) / total * 100
         direction = "+" if delta > 0 else "−"
         factors.append(f"{feature_text[name]} ({direction}{pct:.0f}% model attribution)")
+    for flag, name in (
+        ("history_prior_used", "historical_fulfillment_rate"),
+        ("rating_prior_used", "average_rating"),
+        ("price_prior_used", "price_competitiveness"),
+    ):
+        if raw_features.get(flag):
+            factors.append(feature_text[name])
     return factors
 
 

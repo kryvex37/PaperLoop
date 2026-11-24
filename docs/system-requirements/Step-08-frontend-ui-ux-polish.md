@@ -1,46 +1,21 @@
-# Step 8: Frontend UI/UX Polish & Dashboard Integration
+# Step 8: Frontend UI/UX Polish and Dashboard Integration
 
-## Overview of Implemented Enhancements
+## Implementation status
 
-In accordance with **Step 8** and the project requirements, comprehensive frontend polish and Bootstrap-based component integration have been executed across all dashboards and AI recommendation workflows:
+Bootstrap-based templates are used by the institution and recycler dashboards, and the admin landing page now presents model operations in responsive Bootstrap cards. This documents template implementation; browser-level visual review remains outstanding because no browser renderer is available in the development environment.
 
----
+### Dashboard workflows
 
-### 1. Integration Across All Dashboards (Admin, Institution, Recycler)
+- **Admin (`/admin/`)**: Django admin branding and account verification, rejection, and suspension actions are configured. The landing page groups authorized model operations into responsive cards and retains Django's permission-aware links.
+- **Institution (`/accounts/institution/`)**: Listing metrics and actions, forecast summary, recycling records, bulk aggregation, and partner directory links are present.
+- **Partner (`/accounts/partner/`)**: Profile/capacity summary and collection request actions are present.
 
-- **Admin Portal (`/admin/`):**
-  - Updated Django admin site header, titles, and indexing branding to **"PaperLoop Administration"** and **"Marketplace Overview & Verification Operations"**.
-  - Verified role management, organization account verification, rejection, and suspension actions styled seamlessly.
-- **Institution Dashboard (`/institution/`):**
-  - Polished responsive metrics cards (Total Listings, Available to Partners, Drafts).
-  - Integration of quick action buttons for **Recycling Records & Impact**, **Bulk Pickup Opportunities**, and **Partner Directory**.
-  - Modernized waste forecasting module displaying 4-week projections and exam spike warnings.
-- **Recycler Partner Dashboard (`/partner/`):**
-  - Integrated KPI cards for **Operational Status**, **Processing Capacity**, and **Accepted Categories**.
-  - Responsive tables with status pills for incoming collection requests and live available marketplace listings.
-  - One-click workflow triggers for **Accept**, **Schedule Pickup**, and **Record Final Weight**.
+### Recommendation workflows
 
----
+- Partner recommendation cards show paper category, available capacity, service-area fit, verification status, marketplace history, and a collection request form. Ranking scores are labeled by source: model output on a 0–1 scale, or the rules-based service-area score on a 0–100 scale.
+- The page distinguishes eligibility-based recommendations from trained-model ranking. It shows a model score only when the trained ranker actually produced one.
+- Bulk aggregation cards show bundle participants and available distance, transport, and capacity factors.
 
-### 2. Clean Visual Cards for AI Recommendation Pages (FR-08 Polish)
+### Verification status
 
-- **Partner Recommendations (`/institution/listings/<id>/recommendations/`):**
-  - **Match Score Bar & Pill:** Features visual match percentage indicators (e.g. `98% Match`, `AI Rank Score`).
-  - **Structured 4-Factor Reason Cards:**
-    1. **Material Grade Match:** Confirms accepted paper categories.
-    2. **Capacity Match:** Displays exact available capacity vs. listing load.
-    3. **Location & Service Area:** Clear proximity and service coverage indicator.
-    4. **Reliability & History:** Partner ratings, fulfillment statistics, and verified credentials.
-  - **Explainability Breakdown:** Detailed decision attribution box showing exact positive model factors.
-  - **Direct Request Integration:** Inline collection request form with optional pickup notes.
-- **AI Bulk Pickup Bundles (`/ai/bulk-aggregation/`):**
-  - Visual candidate cards with 4 key metrics: **Truck Utilization %**, **Distance Saved (km)**, **Transport Cost / kg**, and **Optimization Score**.
-  - Clear participants breakdown table and decision explanation factors.
-
----
-
-### 3. Automated Test Verification
-
-All 61 comprehensive test cases pass without any errors:
-- **Command:** `python manage.py test`
-- **Result:** `Ran 61 tests in 75.353s — OK`
+The FR-03/FR-05 listing and FR-09/FR-10 collection workflows use `TransactionTestCase` so requests run under PostgreSQL autocommit behavior. The full suite passes all 87 tests, including assertions for the Bootstrap admin dashboard and recommendation card output. Browser-level visual review remains outstanding because no local browser renderer is installed. See [the master roadmap](../project-roadmap.md).

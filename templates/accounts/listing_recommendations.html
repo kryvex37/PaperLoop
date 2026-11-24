@@ -14,11 +14,15 @@
   <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-start gap-3 mb-4">
     <div>
       <div class="d-flex align-items-center gap-2 mb-1">
-        <span class="badge text-bg-success-subtle text-success border border-success-subtle px-2 py-1 small fw-semibold text-uppercase">AI Recommendation Engine</span>
+        {% if ranking_method == "pytorch" %}
+          <span class="badge text-bg-success-subtle text-success border border-success-subtle px-2 py-1 small fw-semibold text-uppercase">AI-ranked recommendations</span>
+        {% else %}
+          <span class="badge text-bg-secondary-subtle text-secondary border px-2 py-1 small fw-semibold text-uppercase">Eligibility-based recommendations</span>
+        {% endif %}
       </div>
       <h1 class="h2 mb-1 fw-bold text-dark">Recommended Recyclers for Listing</h1>
       <p class="text-secondary mb-0">
-        AI and rule-based matching ranked by operational capacity, service area proximity, accepted paper grades, and fulfillment reliability.
+        Candidates meet the category, service-area, verification, and capacity requirements. {% if ranking_method == "pytorch" %}A trained model ranks eligible partners using the available candidate features.{% else %}They are ordered by service-area fit; a trained ranking model is not available for this listing.{% endif %}
       </p>
     </div>
     <div>
@@ -70,11 +74,6 @@
     <div class="d-flex flex-column gap-4">
       {% for rec in recommendations %}
         <div class="card border-0 shadow-sm rounded-3 overflow-hidden position-relative">
-          <!-- Top progress bar for match score -->
-          <div class="progress" style="height: 4px;" role="progressbar" aria-valuenow="{{ rec.match_score }}" aria-valuemin="0" aria-valuemax="100">
-            <div class="progress-bar bg-success" style="width: {{ rec.match_score }}%;"></div>
-          </div>
-
           <div class="card-body p-3 p-md-4">
             <!-- Header Section -->
             <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-start gap-3 mb-3">
@@ -100,13 +99,12 @@
 
               <!-- Score Indicator Badge -->
               <div class="text-sm-end">
-                <div class="badge rounded-pill fs-6 px-3 py-2 text-bg-success shadow-sm">
-                  🎯 {{ rec.match_score }}% Match
-                </div>
                 {% if rec.ai_relevance != None %}
-                  <div class="small text-secondary mt-1">
-                    AI Rank Score: <strong class="text-dark">{{ rec.ai_relevance|floatformat:2 }}</strong>
-                  </div>
+                  <div class="badge rounded-pill fs-6 px-3 py-2 text-bg-success shadow-sm" aria-label="AI ranking score {{ rec.ai_relevance|floatformat:2 }} out of 1">AI ranking score: {{ rec.ai_relevance|floatformat:2 }} / 1</div>
+                  <div class="small text-secondary mt-1">Used to order eligible partners</div>
+                {% else %}
+                  <div class="badge rounded-pill fs-6 px-3 py-2 text-bg-secondary" aria-label="Service area fit score {{ rec.match_score }} out of 100">Service-area fit: {{ rec.match_score }} / 100</div>
+                  <div class="small text-secondary mt-1">Rule-based ordering</div>
                 {% endif %}
               </div>
             </div>
@@ -117,10 +115,10 @@
               <div class="col-6 col-md-3">
                 <div class="border rounded-2 p-2 bg-light-subtle h-100">
                   <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
-                    <span>✓</span> Material Grade
+                    <span aria-hidden="true">✓</span> {{ rec.factor_breakdown.category.label }}
                   </div>
-                  <div class="small fw-bold text-dark mt-1">{{ listing.get_paper_type_display }}</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Accepted by partner</div>
+                  <div class="small fw-bold text-dark mt-1">{{ rec.factor_breakdown.category.status }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ rec.factor_breakdown.category.detail }}</div>
                 </div>
               </div>
 
@@ -128,12 +126,12 @@
               <div class="col-6 col-md-3">
                 <div class="border rounded-2 p-2 bg-light-subtle h-100">
                   <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
-                    <span>✓</span> Capacity Match
+                    <span aria-hidden="true">✓</span> {{ rec.factor_breakdown.capacity.label }}
                   </div>
                   <div class="small fw-bold text-dark mt-1">
-                    {% if rec.available_capacity_kg == None %}Flexible{% else %}{{ rec.available_capacity_kg }} kg avail.{% endif %}
+                    {{ rec.factor_breakdown.capacity.status }}
                   </div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Covers {{ listing.quantity_kg }} kg request</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ rec.factor_breakdown.capacity.detail }}; covers {{ listing.quantity_kg }} kg request</div>
                 </div>
               </div>
 
@@ -141,12 +139,12 @@
               <div class="col-6 col-md-3">
                 <div class="border rounded-2 p-2 bg-light-subtle h-100">
                   <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
-                    <span>✓</span> Service Area
+                    <span aria-hidden="true">✓</span> {{ rec.factor_breakdown.location.label }}
                   </div>
                   <div class="small fw-bold text-dark mt-1 text-truncate">
-                    {{ rec.partner.service_area|default:listing.pickup_city }}
+                    {{ rec.factor_breakdown.location.status }}
                   </div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Servicing {{ listing.pickup_city }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ rec.factor_breakdown.location.detail }}</div>
                 </div>
               </div>
 
@@ -154,12 +152,10 @@
               <div class="col-6 col-md-3">
                 <div class="border rounded-2 p-2 bg-light-subtle h-100">
                   <div class="d-flex align-items-center gap-1 text-success small fw-semibold">
-                    <span>✓</span> Partner History
+                    <span aria-hidden="true">✓</span> {{ rec.factor_breakdown.history.label }}
                   </div>
-                  <div class="small fw-bold text-dark mt-1">
-                    {% if rec.partner.average_rating %}⭐ {{ rec.partner.average_rating|floatformat:1 }}/5.0{% else %}Verified Partner{% endif %}
-                  </div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Platform vetted credentials</div>
+                  <div class="small fw-bold text-dark mt-1">{{ rec.factor_breakdown.history.status }}</div>
+                  <div class="text-muted" style="font-size: 0.75rem;">{{ rec.factor_breakdown.history.detail }}</div>
                 </div>
               </div>
             </div>
@@ -167,7 +163,7 @@
             <!-- Detailed Explainability List -->
             <div class="bg-success-subtle bg-opacity-25 rounded-2 p-3 mb-3 border border-success-subtle">
               <div class="small fw-bold text-success text-uppercase mb-1" style="letter-spacing: 0.5px;">
-                AI Reasoning &amp; Decision Attribution:
+                {% if rec.ai_relevance != None %}AI ranking factors:{% else %}Eligibility checks:{% endif %}
               </div>
               <ul class="list-unstyled mb-0 row g-1">
                 {% for factor in rec.match_factors %}
