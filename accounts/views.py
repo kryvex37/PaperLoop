@@ -409,17 +409,17 @@ def collection_detail(request, collection_id):
 @require_POST
 def partner_accept_collection(request, collection_id):
     """Partner accepts a requested collection."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update(),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status != Collection.Status.REQUESTED:
-        messages.error(request, "This collection request is not in pending requested status.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionAcceptForm(request.POST)
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update(),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if collection.status != Collection.Status.REQUESTED:
+            messages.error(request, "This collection request is not in pending requested status.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+
         collection.status = Collection.Status.ACCEPTED
         if form.is_valid() and form.cleaned_data.get("notes"):
             note = form.cleaned_data["notes"].strip()
@@ -434,21 +434,20 @@ def partner_accept_collection(request, collection_id):
 @require_POST
 def partner_reject_collection(request, collection_id):
     """Partner rejects a requested collection and releases listing back to available."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update().select_related("listing"),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status != Collection.Status.REQUESTED:
-        messages.error(request, "Only pending collection requests can be rejected.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionRejectForm(request.POST)
-    if not form.is_valid():
-        messages.error(request, "Please provide a valid reason for rejecting this collection request.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update().select_related("listing"),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if not form.is_valid():
+            messages.error(request, "Please provide a valid reason for rejecting this collection request.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+        if collection.status != Collection.Status.REQUESTED:
+            messages.error(request, "Only pending collection requests can be rejected.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+
         collection.status = Collection.Status.REJECTED
         collection.rejection_reason = form.cleaned_data["rejection_reason"].strip()
         collection.save(update_fields=["status", "rejection_reason"])
@@ -466,23 +465,22 @@ def partner_reject_collection(request, collection_id):
 @require_POST
 def partner_schedule_collection(request, collection_id):
     """Partner schedules the pickup date and time."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update(),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status not in (Collection.Status.REQUESTED, Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
-        messages.error(request, "Cannot schedule a collection in this status.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionScheduleForm(request.POST)
-    if not form.is_valid():
-        for error_list in form.errors.values():
-            for error in error_list:
-                messages.error(request, error)
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update(),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if not form.is_valid():
+            for error_list in form.errors.values():
+                for error in error_list:
+                    messages.error(request, error)
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+        if collection.status not in (Collection.Status.REQUESTED, Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
+            messages.error(request, "Cannot schedule a collection in this status.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+
         collection.scheduled_for = form.cleaned_data["scheduled_for"]
         collection.status = Collection.Status.SCHEDULED
         if form.cleaned_data.get("notes"):
@@ -498,26 +496,24 @@ def partner_schedule_collection(request, collection_id):
 @require_POST
 def partner_complete_collection(request, collection_id):
     """Partner records final collected quantity and marks collection complete."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update().select_related("listing"),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status not in (Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
-        messages.error(request, "Only accepted or scheduled collections can be marked as collected.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionCompleteForm(request.POST)
-    if not form.is_valid():
-        for error_list in form.errors.values():
-            for error in error_list:
-                messages.error(request, error)
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
-    final_qty = form.cleaned_data["final_collected_quantity_kg"]
-    notes = form.cleaned_data.get("notes", "").strip()
-
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update().select_related("listing"),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if not form.is_valid():
+            for error_list in form.errors.values():
+                for error in error_list:
+                    messages.error(request, error)
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+        if collection.status not in (Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
+            messages.error(request, "Only accepted or scheduled collections can be marked as collected.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+
+        final_qty = form.cleaned_data["final_collected_quantity_kg"]
+        notes = form.cleaned_data.get("notes", "").strip()
         collection.final_collected_quantity_kg = final_qty
         collection.status = Collection.Status.COLLECTED
         collection.collected_at = timezone.now()
@@ -551,16 +547,16 @@ def partner_complete_collection(request, collection_id):
 @require_POST
 def institution_cancel_collection(request, collection_id):
     """Institution cancels a collection request before it is accepted/scheduled."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update().select_related("listing"),
-        pk=collection_id,
-        listing__institution__user=request.user,
-    )
-    if collection.status != Collection.Status.REQUESTED:
-        messages.error(request, "You can only cancel collection requests that are still pending acceptance.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update().select_related("listing"),
+            pk=collection_id,
+            listing__institution__user=request.user,
+        )
+        if collection.status != Collection.Status.REQUESTED:
+            messages.error(request, "You can only cancel collection requests that are still pending acceptance.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
+
         collection.status = Collection.Status.CANCELLED
         collection.notes = f"{collection.notes}\n[Cancelled by institution on {timezone.now().strftime('%Y-%m-%d %H:%M')}]".strip()
         collection.save(update_fields=["status", "notes"])

@@ -41,6 +41,4 @@ In accordance with **Step 8** and the project requirements, comprehensive fronte
 
 ### 3. Automated Test Verification
 
-All 61 comprehensive test cases pass without any errors:
-- **Command:** `python manage.py test`
-- **Result:** `Ran 61 tests in 75.353s — OK`
+The original Step 8 verification passed 61 tests. Step 9 added six registration, admin, listing, and media integration tests; the current 67-test PostgreSQL result is recorded in [Step 9 integration and testing](Step-09-system-integration-and-testing.md).

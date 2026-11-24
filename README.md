@@ -12,7 +12,7 @@ PaperLoop is a Django application for educational institutions and recycling/col
 - Django administration for platform staff and superusers, including verification, rejection, and suspension actions.
 - Initial ORM records for educational institutions, recycling profiles, paper listings, collections, and completed transactions.
 - Bootstrap institution dashboard with create, edit, and withdraw listing flows; listings capture paper category, estimated kilograms, pickup location, collection window, and an optional private photo upload.
-- SQLite for local development and PostgreSQL configuration through environment variables.
+- PostgreSQL configured through environment variables.
 
 Verification policy assumption: registrations remain enabled for authentication so users can see review status, while protected organization pages require verified status. Rejection retains the account for audit and support; suspension also disables sign-in. The schema models one organization profile per account for this initial milestone.
 
@@ -21,18 +21,19 @@ Verification policy assumption: registrations remain enabled for authentication 
 1. Create and activate a virtual environment.
 2. Install dependencies: `python -m pip install -r requirements.txt`.
 3. Copy `.env.example` to `.env` and set the values you need. The project loads this local file automatically; operating-system environment variables take precedence. Keep `.env` private and use a strong `DJANGO_SECRET_KEY` outside local development.
-4. Apply migrations: `python manage.py migrate`.
-5. Create a platform administrator: `python manage.py createsuperuser`.
-6. Start the development server: `python manage.py runserver`.
-7. Open `/accounts/register/` to register an institution or partner, `/accounts/login/` to sign in, or `/admin/` for the Django administration site.
+4. Create the PostgreSQL database configured by `DB_NAME` (default `paperloop`) with owner `DB_USER` if it does not already exist. With a local `postgres` role, connect to the maintenance database and run `CREATE DATABASE paperloop OWNER postgres;`. Django migrations create tables but do not create the database.
+5. Apply migrations: `python manage.py migrate`.
+6. Create a platform administrator: `python manage.py createsuperuser`.
+7. Start the development server: `python manage.py runserver`.
+8. Open `/accounts/register/` to register an institution or partner, `/accounts/login/` to sign in, or `/admin/` for the Django administration site.
 
-Set `DATABASE_URL` to a PostgreSQL connection string, or set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, and optional `DB_SSLMODE`. A URL can include `?sslmode=require` when your database provider requires TLS. Django uses PostgreSQL when configured and local SQLite as a convenient fallback.
+Set `DATABASE_URL` to a PostgreSQL connection string, or set `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, and optional `DB_SSLMODE`. A URL can include `?sslmode=require` when your database provider requires TLS. PostgreSQL is required; Django reports a configuration error if it is not configured.
 
 ## AI pilot pipeline
 
 The `ml_engine` package contains a seeded NumPy/pandas pilot generator, a next-week paper-waste forecaster, a grouped pairwise recycler ranker, and a spatial-temporal bulk aggregation scorer. The generator writes synthetic institutions and recyclers, 24 months of calendar-aware weekly waste records, transaction and pickup history, geo-clustered pickup requests, labeled recycler candidates, and aggregation proposals. It does not create or mutate Django production rows. Synthetic records and labels exist to exercise the pipeline and do not represent observed marketplace behavior.
 
-The forecaster uses weekly lags, institution size, paper-category shares, and calendar features; it returns a point estimate and an approximate 90% prediction interval. The ranker uses distance, capacity utilization, paper compatibility, fulfillment, ratings, and price competitiveness, and explains each score through feature perturbation. Django recommendations still enforce FR-06 eligibility before ranking. Since the current schema does not store coordinates, prices, ratings, or fulfillment history, Django uses the alphabetical fallback until those real candidate features are supplied. Missing or invalid artifacts also use the fallback.
+The forecaster uses weekly lags, institution size, paper-category shares, and calendar features; it returns a point estimate and an approximate 90% prediction interval. The ranker uses distance, capacity utilization, paper compatibility, fulfillment, ratings, and price competitiveness, and explains each score through feature perturbation. Django recommendations enforce FR-06 eligibility before ranking. Optional location and ranking signals may be missing on real profiles, in which case the safe baseline is used. The pilot seeder adds clearly synthetic values to exercise live ranking; missing or invalid artifacts also use the fallback.
 
 Institution and recycler profiles now store nullable latitude/longitude. Institutions also store student count; `WasteRecord` stores weekly weights by paper grade. Institutions can update size and location at `/accounts/institution/profile/`; partner profile forms accept coordinates. The institution dashboard shows four forecast weeks when at least four recorded weeks exist, with an exam-season alert and a calendar-adjusted baseline fallback if no checkpoint is available. `/accounts/ai/bulk-aggregation/` lists feasible bundles across geocoded active listings and verified recyclers. New or un-geocoded profiles receive explanatory empty states. Existing FR-07 recommendations render reason factors at `/accounts/institution/listings/<id>/recommendations/`.
 
@@ -47,24 +48,27 @@ python manage.py generate_pilot_data --institutions 80 --requests 1500 --months 
 python manage.py train_ai_models --seed 42 --epochs 35
 ```
 
-Pilot CSV data and `.pt`/`.json` checkpoints are generated under `ml_engine/datasets/data/` and `ml_engine/artifacts/` and are excluded from Git. Training uses a chronological holdout for forecasting, request-group holdout for ranking, and a seeded shuffled holdout for aggregation. JSON sidecars record metrics, seed, feature schema, feature scaling, and configuration. Metrics evaluate synthetic data only; validate with appropriate historical outcomes and compare to a baseline before drawing conclusions about real marketplace performance. Run `python manage.py test` for the Django and ML pipeline test suite.
+Pilot CSV data and `.pt`/`.json` checkpoints are generated under `ml_engine/datasets/data/` and `ml_engine/artifacts/` and are excluded from Git. Training uses a chronological holdout for forecasting, request-group holdout for ranking, and a seeded shuffled holdout for aggregation. JSON sidecars record metrics, seed, feature schema, feature scaling, and configuration. Metrics evaluate synthetic data only; validate with appropriate historical outcomes and compare to a baseline before drawing conclusions about real marketplace performance. The full suite contains 67 tests; run `python manage.py test --verbosity 1` to execute it.
 
-### Project-local PostgreSQL server
+### PostgreSQL database setup
 
-This workspace has a PostgreSQL 18.6 development server and database in the ignored `.local/` directory. Its connection settings and generated development credentials are in the ignored `.env` file. Keep both directories private; neither is committed to Git.
+Set `DB_NAME=paperloop`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, and `DB_PORT` in `.env`, or provide a PostgreSQL `DATABASE_URL` (which takes precedence). Start PostgreSQL using the method for your installation. If the database is missing, use pgAdmin or connect with `psql -h 127.0.0.1 -p 5432 -U <database_admin_role> -d postgres` and run `CREATE DATABASE paperloop OWNER <application_role>;`. The application role needs database-creation permission, or an administrator can create it. Then run `python manage.py migrate`. Never commit `.env` or credentials.
 
-Start PostgreSQL from PowerShell before starting Django:
+See [ROADMAP.md](ROADMAP.md) for the FR-01–FR-12 tracker, test coverage, and 10-milestone status.
 
-```powershell
-.\.local\pgsql\bin\pg_ctl.exe --pgdata=".local/postgres-data" --log=".local/postgres-server.log" --options="-h 127.0.0.1 -p 5432" --wait --timeout=30 start
-python manage.py runserver 127.0.0.1:8000
-```
+Step 9 integration and end-to-end verification results are documented in [docs/system-requirements/Step-09-system-integration-and-testing.md](docs/system-requirements/Step-09-system-integration-and-testing.md).
 
-Stop PostgreSQL when you are finished:
+## Render deployment
 
-```powershell
-.\.local\pgsql\bin\pg_ctl.exe --pgdata=".local/postgres-data" --mode=fast stop
-```
+The repository includes a Render Blueprint in [`render.yaml`](render.yaml), a pinned Python runtime in [`.python-version`](.python-version), and the [build script](build.sh). The Blueprint creates a Django web service and a PostgreSQL database, connects them through Render's internal database URL, collects static files with WhiteNoise, and runs migrations during each build.
+
+1. Push this repository to a Git provider connected to Render.
+2. In Render, create a Blueprint deployment from the repository and review the proposed resources before applying it. The checked-in Blueprint uses free plans for a demo deployment; select a paid persistent database plan before storing pilot or production data.
+3. Wait for the build to finish. The generated `DJANGO_SECRET_KEY` stays in Render environment settings. To use a custom domain, update `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS` to match it.
+4. Create the first staff account from the service's Render Shell with `python manage.py createsuperuser`.
+5. Open the service URL and check the home/dashboard route, `/admin/`, and static styles. Add evaluation screenshots under `docs/project-evaluation/screenshots/` using the capture list in that directory's README.
+
+Deployment commands and variables are described in [Step 10 deployment and evaluation](docs/Step-10-deployment-and-final-documentation.md). The free database plan is intended only for a disposable demonstration; confirm current Render retention, pricing, and service limits before choosing a production plan.
 
 ## Security and scope notes
 
