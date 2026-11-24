@@ -32,7 +32,7 @@ This document records the current checkout aligned to `origin/main` (`3241ef2`) 
 | 7 | Transaction history and digital recycling records (FR-11–FR-12) | **Implemented** | Completion, impact, authorization, transaction history, and record rendering pass workflow tests |
 | 8 | Bootstrap dashboard integration and AI recommendation presentation | **Implemented** | Admin, institution, partner, recommendation, and aggregation pages smoke-check against PostgreSQL with model scores |
 | 9 | Django, PyTorch, and media-storage integration; role-based functional verification for FR-01–FR-12 | **Complete for local integration and automated verification** — Django-backed workflows, saved model inference, and private media storage are exercised on PostgreSQL | All 67 tests pass on PostgreSQL; dashboard/AI smoke checks return HTTP 200; saved forecasting, ranking, and aggregation checkpoints load. Production deployment hardening remains for milestone 10 |
-| 10 | Controlled pilot and release readiness | **Planned** — depends on real historical/operational data and stakeholder policy decisions | Validate model quality on real outcomes, approve impact benchmarks and FR-02 policy, run pilot acceptance, document support/rollback and sign-off |
+| 10 | Controlled pilot and release readiness | **Deployment configuration and evaluation documentation prepared; cloud deployment and pilot remain outstanding** | Render Blueprint, PostgreSQL wiring, production environment settings, and project evaluation materials are in place. Deploy and smoke-check on Render, capture real UI screenshots, validate model quality on real outcomes, approve impact benchmarks and FR-02 policy, and document support/rollback and sign-off |
 
 ## Current verification notes
 
@@ -42,3 +42,4 @@ This document records the current checkout aligned to `origin/main` (`3241ef2`) 
 - The current automated suite contains 67 tests; the final PostgreSQL-backed run passed in 199.966 seconds (`python manage.py test --verbosity 1 --keepdb`).
 - Step 9 details and role/FR verification evidence are recorded in [Step 9 integration and testing](docs/system-requirements/Step-09-system-integration-and-testing.md).
 - Pilot records and all model evaluation labels are synthetic; they are for workflow checks, not real-world performance claims.
+- Step 10 deployment configuration and evaluation materials are documented in [Step 10](docs/Step-10-deployment-and-final-documentation.md); no Render deployment has been launched from this checkout.

@@ -58,6 +58,18 @@ See [ROADMAP.md](ROADMAP.md) for the FR-01–FR-12 tracker, test coverage, and 1
 
 Step 9 integration and end-to-end verification results are documented in [docs/system-requirements/Step-09-system-integration-and-testing.md](docs/system-requirements/Step-09-system-integration-and-testing.md).
 
+## Render deployment
+
+The repository includes a Render Blueprint in [`render.yaml`](render.yaml), a pinned Python runtime in [`.python-version`](.python-version), and the [build script](build.sh). The Blueprint creates a Django web service and a PostgreSQL database, connects them through Render's internal database URL, collects static files with WhiteNoise, and runs migrations during each build.
+
+1. Push this repository to a Git provider connected to Render.
+2. In Render, create a Blueprint deployment from the repository and review the proposed resources before applying it. The checked-in Blueprint uses free plans for a demo deployment; select a paid persistent database plan before storing pilot or production data.
+3. Wait for the build to finish. The generated `DJANGO_SECRET_KEY` stays in Render environment settings. To use a custom domain, update `DJANGO_ALLOWED_HOSTS` and `DJANGO_CSRF_TRUSTED_ORIGINS` to match it.
+4. Create the first staff account from the service's Render Shell with `python manage.py createsuperuser`.
+5. Open the service URL and check the home/dashboard route, `/admin/`, and static styles. Add evaluation screenshots under `docs/project-evaluation/screenshots/` using the capture list in that directory's README.
+
+Deployment commands and variables are described in [Step 10 deployment and evaluation](docs/Step-10-deployment-and-final-documentation.md). The free database plan is intended only for a disposable demonstration; confirm current Render retention, pricing, and service limits before choosing a production plan.
+
 ## Security and scope notes
 
 - `DJANGO_DEBUG` defaults to `true` for local development. Set it to `false`, use a strong secret, configure allowed hosts, HTTPS, and deployment-specific security settings before exposing the application.
