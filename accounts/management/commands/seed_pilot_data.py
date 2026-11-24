@@ -26,7 +26,7 @@ INSTITUTIONS = (
     ("Farmgate College", "Farmgate", 23.7570, 90.3890, 9300),
 )
 RECYCLERS = (
-    ("Dhaka Green Paper Recovery", "Dhanmondi, Mirpur, Dhaka", 23.755, 90.385, 35000),
+    ("Dhaka Green Paper Recovery", "All regions (Dhaka metro pilot coverage)", 23.755, 90.385, 35000),
     ("Buriganga Bulk Recyclers", "Old Dhaka, Motijheel, Dhaka", 23.718, 90.410, 28000),
     ("North Metro Collection", "Uttara, Mirpur, Dhaka", 23.855, 90.390, 22000),
     ("Central Circular Materials", "Tejgaon, Farmgate, Banani, Dhaka", 23.780, 90.400, 40000),
@@ -129,8 +129,23 @@ class Command(BaseCommand):
             profile.capacity_unit = RecyclingProfile.CapacityUnit.KILOGRAM
             profile.capacity_period = RecyclingProfile.CapacityPeriod.MONTH
             profile.collection_available = True
+            # Synthetic seed features exercise the learned ranker; they are
+            # not observed fulfillment, rating, or pricing outcomes.
+            profile.historical_fulfillment_rate = (
+                profile.historical_fulfillment_rate if profile.historical_fulfillment_rate is not None
+                else round(.78 + .025 * index, 3)
+            )
+            profile.average_rating = (
+                profile.average_rating if profile.average_rating is not None
+                else round(3.9 + .1 * index, 2)
+            )
+            profile.price_competitiveness = (
+                profile.price_competitiveness if profile.price_competitiveness is not None
+                else round(.82 + .04 * index, 3)
+            )
             profile.save(update_fields=("service_area", "latitude", "longitude", "accepted_paper_types",
-                                        "maximum_capacity", "capacity_unit", "capacity_period", "collection_available", "updated_at"))
+                                        "maximum_capacity", "capacity_unit", "capacity_period", "collection_available",
+                                        "historical_fulfillment_rate", "average_rating", "price_competitiveness", "updated_at"))
             pilot_recyclers.append(profile)
 
         seeded_profiles = [row[0] for row in pilot_institutions]
