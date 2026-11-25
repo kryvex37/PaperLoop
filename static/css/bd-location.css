@@ -1,0 +1,283 @@
+/* Bangladesh Location Picker & Interactive Leaflet Map UI */
+.bd-loc-panel {
+  background: #10141B;
+  border: 1px solid rgba(85, 183, 122, 0.24);
+  border-radius: 12px;
+  padding: 1rem 1.125rem;
+  color: #EDF5EF;
+}
+
+.bd-loc-panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.bd-loc-panel-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #8BD4A3;
+  margin: 0;
+}
+
+.bd-loc-panel .form-label,
+.bd-loc-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #BDCCBF;
+  margin-bottom: 0.35rem;
+}
+
+.bd-loc-panel .form-control,
+.bd-loc-panel .form-select {
+  background-color: #111A15 !important;
+  color: #EDF5EF !important;
+  border: 1px solid rgba(139, 212, 163, 0.24) !important;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  min-height: 42px;
+}
+
+.bd-loc-panel .form-control::placeholder {
+  color: rgba(189, 204, 191, 0.55);
+}
+
+.bd-loc-panel .form-control:focus,
+.bd-loc-panel .form-select:focus {
+  border-color: #55B77A !important;
+  box-shadow: 0 0 0 0.2rem rgba(85, 183, 122, 0.22) !important;
+}
+
+.bd-loc-add-btn {
+  background: #1D3928;
+  color: #8BD4A3;
+  border: 1px solid rgba(85, 183, 122, 0.45);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  min-height: 42px;
+  padding: 0.45rem 0.95rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.bd-loc-add-btn:hover:not(:disabled) {
+  background: #244933;
+  border-color: #8BD4A3;
+  color: #EDF5EF;
+}
+
+.bd-loc-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bd-loc-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 36px;
+  padding: 0.5rem 0.65rem;
+  background: #111A15;
+  border: 1px dashed rgba(139, 212, 163, 0.24);
+  border-radius: 8px;
+}
+
+.bd-loc-pills-empty {
+  color: rgba(189, 204, 191, 0.6);
+  font-size: 0.83rem;
+  align-self: center;
+}
+
+.bd-loc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(85, 183, 122, 0.16);
+  border: 1px solid rgba(85, 183, 122, 0.42);
+  color: #B6E6C4;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.bd-loc-pill-remove {
+  background: transparent;
+  border: 0;
+  color: #8BD4A3;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 0.1rem;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.bd-loc-pill-remove:hover {
+  color: #FFAAA0;
+}
+
+.bd-autocomplete-wrap {
+  position: relative;
+}
+
+.bd-autocomplete-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #10141B;
+  border: 1px solid rgba(85, 183, 122, 0.35);
+  border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  max-height: 250px;
+  overflow-y: auto;
+  display: none;
+}
+
+.bd-autocomplete-results.is-open {
+  display: block;
+}
+
+.bd-autocomplete-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(139, 212, 163, 0.12);
+  padding: 0.6rem 0.85rem;
+  color: #EDF5EF;
+  cursor: pointer;
+}
+
+.bd-autocomplete-item:last-child {
+  border-bottom: 0;
+}
+
+.bd-autocomplete-item:hover,
+.bd-autocomplete-item:focus {
+  background: rgba(85, 183, 122, 0.16);
+  outline: none;
+}
+
+.bd-autocomplete-title {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #EDF5EF;
+}
+
+.bd-autocomplete-sub {
+  display: block;
+  font-size: 0.76rem;
+  color: #BDCCBF;
+  margin-top: 0.12rem;
+}
+
+.bd-autocomplete-status {
+  padding: 0.65rem 0.85rem;
+  font-size: 0.82rem;
+  color: #BDCCBF;
+}
+
+.bd-map-box {
+  height: 260px;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(85, 183, 122, 0.28);
+  background: #0D1217;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.bd-map-box--compact {
+  height: 230px;
+}
+
+.bd-map-box .leaflet-tile-pane {
+  filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(90%);
+}
+
+.bd-location-summary {
+  background: #111A15;
+  border: 1px solid rgba(85, 183, 122, 0.36);
+  border-radius: 10px;
+  padding: 0.75rem 0.95rem;
+}
+
+.bd-location-summary.is-empty {
+  border-style: dashed;
+  border-color: rgba(139, 212, 163, 0.24);
+}
+
+.bd-location-summary-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #8BD4A3;
+  margin-bottom: 0.35rem;
+}
+
+.bd-location-summary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.bd-loc-error-banner {
+  background: rgba(140, 48, 48, 0.22);
+  border: 1px solid rgba(255, 170, 160, 0.45);
+  color: #FFAAA0;
+  border-radius: 8px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.84rem;
+  margin-top: 0.75rem;
+  display: none;
+}
+
+.bd-loc-error-banner.is-visible {
+  display: block;
+}
+
+.bd-coord-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.76rem;
+  color: #8BD4A3;
+  background: rgba(29, 57, 40, 0.75);
+  border: 1px solid rgba(85, 183, 122, 0.35);
+  border-radius: 6px;
+  padding: 0.22rem 0.55rem;
+}
+
+.bd-loc-hint {
+  font-size: 0.78rem;
+  color: #9FB3A4;
+}
+
+/* Custom emerald Leaflet pin */
+.bd-emerald-pin {
+  background: transparent;
+  border: 0;
+}
+
+.bd-emerald-pin-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #55B77A;
+  border: 3px solid #EDF5EF;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.65);
+}
