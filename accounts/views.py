@@ -1,15 +1,18 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.db.models import Exists, OuterRef, Q, Sum
-from django.http import FileResponse, Http404
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Exists, OuterRef, Q, Sum
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from PIL import Image
 
 from .decorators import partner_profile_required, role_required
+from .location_service import get_districts, get_divisions, get_upazilas, reverse_geocode, search_locations
 from .forms import (
     CollectionAcceptForm,
     CollectionCompleteForm,
@@ -28,6 +31,7 @@ from .models import (
     PaperListing,
     RecyclingProfile,
     Transaction,
+    User,
     UserRole,
     VerificationStatus,
 )
@@ -41,12 +45,22 @@ def register(request):
 
     form = RegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        user = form.save()
-        messages.success(
-            request,
-            "Your PaperLoop account has been created. You can now sign in.",
-        )
-        return redirect("accounts:login")
+        try:
+            form.save()
+        except IntegrityError:
+            # The case-insensitive uniqueness check in the form can race with
+            # another registration. Convert that database conflict into the
+            # same field-level error instead of returning a server error.
+            email = form.cleaned_data.get("email", "")
+            if not User.objects.filter(email__iexact=email).exists():
+                raise
+            form.add_error("email", "An account with this email address already exists.")
+        else:
+            messages.success(
+                request,
+                "Your PaperLoop account has been created. You can now sign in.",
+            )
+            return redirect("accounts:login")
     return render(request, "accounts/register.html", {"form": form})
 
 
@@ -74,10 +88,14 @@ def institution_dashboard(request):
         listing=OuterRef("pk"),
         status__in=ACTIVE_ALLOCATION_STATUSES,
     )
+    non_cancelled_collections = Collection.objects.filter(
+        listing=OuterRef("pk"),
+    ).exclude(status=Collection.Status.CANCELLED)
     listings = (
         PaperListing.objects.filter(institution=institution)
         .prefetch_related("collections__partner__user")
         .annotate(has_collection=Exists(active_collections))
+        .annotate(has_collection_activity=Exists(non_cancelled_collections))
         .order_by("-created_at")
     )
     return render(
@@ -119,9 +137,16 @@ def create_listing(request):
     if request.method == "POST" and form.is_valid():
         listing = form.save(commit=False)
         listing.institution = institution
-        listing.status = PaperListing.Status.AVAILABLE
+        listing.status = (
+            PaperListing.Status.DRAFT
+            if request.POST.get("listing_action") == "draft"
+            else PaperListing.Status.AVAILABLE
+        )
         listing.save()
-        messages.success(request, "Your paper listing is now available to recycling partners.")
+        if listing.status == PaperListing.Status.DRAFT:
+            messages.success(request, "Your paper listing has been saved as a draft.")
+        else:
+            messages.success(request, "Your paper listing is now available to recycling partners.")
         return redirect("accounts:institution_dashboard")
     return render(request, "accounts/listing_form.html", {"form": form, "page_title": "Create a paper listing"})
 
@@ -131,16 +156,45 @@ def create_listing(request):
 def edit_listing(request, listing_id):
     institution = get_object_or_404(EducationalInstitution, user=request.user)
     listing = get_object_or_404(PaperListing, pk=listing_id, institution=institution)
-    can_edit = listing.status in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE)
-    has_collection = listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists()
-    if not can_edit or has_collection:
-        messages.error(request, "This listing can no longer be edited after collection activity has started.")
-        return redirect("accounts:institution_dashboard")
+    if request.method == "GET":
+        has_non_cancelled_collection = listing.collections.exclude(
+            status=Collection.Status.CANCELLED
+        ).exists()
+        if (
+            listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE)
+            or has_non_cancelled_collection
+        ):
+            messages.error(request, "This listing cannot be edited after a non-cancelled collection request exists.")
+            return redirect("accounts:institution_dashboard")
     form = PaperListingForm(request.POST or None, request.FILES or None, instance=listing)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Your paper listing has been updated.")
-        return redirect("accounts:institution_dashboard")
+    if request.method == "POST":
+        with transaction.atomic():
+            listing = get_object_or_404(
+                PaperListing.objects.select_for_update(),
+                pk=listing_id,
+                institution=institution,
+            )
+            has_non_cancelled_collection = listing.collections.exclude(
+                status=Collection.Status.CANCELLED
+            ).exists()
+            if (
+                listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE)
+                or has_non_cancelled_collection
+            ):
+                messages.error(request, "This listing cannot be edited after a non-cancelled collection request exists.")
+                return redirect("accounts:institution_dashboard")
+
+            form = PaperListingForm(request.POST, request.FILES, instance=listing)
+            if form.is_valid():
+                listing = form.save(commit=False)
+                action = request.POST.get("listing_action")
+                if action == "draft":
+                    listing.status = PaperListing.Status.DRAFT
+                elif action == "publish":
+                    listing.status = PaperListing.Status.AVAILABLE
+                listing.save()
+                messages.success(request, "Your paper listing has been updated.")
+                return redirect("accounts:institution_dashboard")
     return render(
         request,
         "accounts/listing_form.html",
@@ -152,15 +206,23 @@ def edit_listing(request, listing_id):
 @require_POST
 def cancel_listing(request, listing_id):
     institution = get_object_or_404(EducationalInstitution, user=request.user)
-    listing = get_object_or_404(PaperListing, pk=listing_id, institution=institution)
-    if listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE):
-        messages.error(request, "Only draft or available listings can be withdrawn.")
-    elif listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
-        messages.error(request, "This listing cannot be withdrawn after collection activity has started.")
-    else:
-        listing.status = PaperListing.Status.CANCELLED
-        listing.save(update_fields=("status", "updated_at"))
-        messages.success(request, "Your listing has been withdrawn.")
+    with transaction.atomic():
+        listing = get_object_or_404(
+            PaperListing.objects.select_for_update(),
+            pk=listing_id,
+            institution=institution,
+        )
+        has_non_cancelled_collection = listing.collections.exclude(
+            status=Collection.Status.CANCELLED
+        ).exists()
+        if listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE):
+            messages.error(request, "Only draft or available listings can be withdrawn.")
+        elif has_non_cancelled_collection:
+            messages.error(request, "This listing cannot be withdrawn after a non-cancelled collection request exists.")
+        else:
+            listing.status = PaperListing.Status.CANCELLED
+            listing.save(update_fields=("status", "updated_at"))
+            messages.success(request, "Your listing has been withdrawn.")
     return redirect("accounts:institution_dashboard")
 
 
@@ -248,12 +310,17 @@ def listing_recommendations(request, listing_id):
         messages.error(request, "Recommendations are only available for listings currently open for collection.")
         return redirect("accounts:institution_dashboard")
     recommendations = get_recommended_partners(listing)
+    ranking_method = (
+        "pytorch" if recommendations and all(item.get("ai_relevance") is not None for item in recommendations)
+        else "rules"
+    )
     return render(
         request,
         "accounts/listing_recommendations.html",
         {
             "listing": listing,
             "recommendations": recommendations,
+            "ranking_method": ranking_method,
         },
     )
 
@@ -409,17 +476,16 @@ def collection_detail(request, collection_id):
 @require_POST
 def partner_accept_collection(request, collection_id):
     """Partner accepts a requested collection."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update(),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status != Collection.Status.REQUESTED:
-        messages.error(request, "This collection request is not in pending requested status.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionAcceptForm(request.POST)
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update(),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if collection.status != Collection.Status.REQUESTED:
+            messages.error(request, "This collection request is not in pending requested status.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
         collection.status = Collection.Status.ACCEPTED
         if form.is_valid() and form.cleaned_data.get("notes"):
             note = form.cleaned_data["notes"].strip()
@@ -434,26 +500,25 @@ def partner_accept_collection(request, collection_id):
 @require_POST
 def partner_reject_collection(request, collection_id):
     """Partner rejects a requested collection and releases listing back to available."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update().select_related("listing"),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status != Collection.Status.REQUESTED:
-        messages.error(request, "Only pending collection requests can be rejected.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionRejectForm(request.POST)
     if not form.is_valid():
         messages.error(request, "Please provide a valid reason for rejecting this collection request.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
+        return redirect("accounts:collection_detail", collection_id=collection_id)
 
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update().select_related("listing"),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if collection.status != Collection.Status.REQUESTED:
+            messages.error(request, "Only pending collection requests can be rejected.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
         collection.status = Collection.Status.REJECTED
         collection.rejection_reason = form.cleaned_data["rejection_reason"].strip()
         collection.save(update_fields=["status", "rejection_reason"])
 
-        listing = collection.listing
+        listing = PaperListing.objects.select_for_update().get(pk=collection.listing_id)
         if not listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
             listing.status = PaperListing.Status.AVAILABLE
             listing.save(update_fields=["status", "updated_at"])
@@ -466,23 +531,22 @@ def partner_reject_collection(request, collection_id):
 @require_POST
 def partner_schedule_collection(request, collection_id):
     """Partner schedules the pickup date and time."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update(),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status not in (Collection.Status.REQUESTED, Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
-        messages.error(request, "Cannot schedule a collection in this status.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionScheduleForm(request.POST)
     if not form.is_valid():
         for error_list in form.errors.values():
             for error in error_list:
                 messages.error(request, error)
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
+        return redirect("accounts:collection_detail", collection_id=collection_id)
 
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update(),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if collection.status not in (Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
+            messages.error(request, "Accept the collection request before scheduling pickup.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
         collection.scheduled_for = form.cleaned_data["scheduled_for"]
         collection.status = Collection.Status.SCHEDULED
         if form.cleaned_data.get("notes"):
@@ -498,26 +562,25 @@ def partner_schedule_collection(request, collection_id):
 @require_POST
 def partner_complete_collection(request, collection_id):
     """Partner records final collected quantity and marks collection complete."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update().select_related("listing"),
-        pk=collection_id,
-        partner__user=request.user,
-    )
-    if collection.status not in (Collection.Status.ACCEPTED, Collection.Status.SCHEDULED):
-        messages.error(request, "Only accepted or scheduled collections can be marked as collected.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     form = CollectionCompleteForm(request.POST)
     if not form.is_valid():
         for error_list in form.errors.values():
             for error in error_list:
                 messages.error(request, error)
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
+        return redirect("accounts:collection_detail", collection_id=collection_id)
 
     final_qty = form.cleaned_data["final_collected_quantity_kg"]
     notes = form.cleaned_data.get("notes", "").strip()
 
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update().select_related("listing"),
+            pk=collection_id,
+            partner__user=request.user,
+        )
+        if collection.status != Collection.Status.SCHEDULED:
+            messages.error(request, "Schedule pickup before recording a completed collection.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
         collection.final_collected_quantity_kg = final_qty
         collection.status = Collection.Status.COLLECTED
         collection.collected_at = timezone.now()
@@ -525,7 +588,7 @@ def partner_complete_collection(request, collection_id):
             collection.notes = f"{collection.notes}\n[Collection completion]: {notes}".strip()
         collection.save()
 
-        listing = collection.listing
+        listing = PaperListing.objects.select_for_update().get(pk=collection.listing_id)
         listing.status = PaperListing.Status.COMPLETED
         listing.save(update_fields=["status", "updated_at"])
 
@@ -551,21 +614,20 @@ def partner_complete_collection(request, collection_id):
 @require_POST
 def institution_cancel_collection(request, collection_id):
     """Institution cancels a collection request before it is accepted/scheduled."""
-    collection = get_object_or_404(
-        Collection.objects.select_for_update().select_related("listing"),
-        pk=collection_id,
-        listing__institution__user=request.user,
-    )
-    if collection.status != Collection.Status.REQUESTED:
-        messages.error(request, "You can only cancel collection requests that are still pending acceptance.")
-        return redirect("accounts:collection_detail", collection_id=collection.pk)
-
     with transaction.atomic():
+        collection = get_object_or_404(
+            Collection.objects.select_for_update().select_related("listing"),
+            pk=collection_id,
+            listing__institution__user=request.user,
+        )
+        if collection.status != Collection.Status.REQUESTED:
+            messages.error(request, "You can only cancel collection requests that are still pending acceptance.")
+            return redirect("accounts:collection_detail", collection_id=collection.pk)
         collection.status = Collection.Status.CANCELLED
         collection.notes = f"{collection.notes}\n[Cancelled by institution on {timezone.now().strftime('%Y-%m-%d %H:%M')}]".strip()
         collection.save(update_fields=["status", "notes"])
 
-        listing = collection.listing
+        listing = PaperListing.objects.select_for_update().get(pk=collection.listing_id)
         if not listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
             listing.status = PaperListing.Status.AVAILABLE
             listing.save(update_fields=["status", "updated_at"])
@@ -574,6 +636,184 @@ def institution_cancel_collection(request, collection_id):
     return redirect("accounts:institution_dashboard")
 
 
+@login_required
+def transaction_history(request):
+    """
+    FR-11: Transaction history management for completed recycling activities.
+    Scoped by the current user's role (Institution or Partner).
+    """
+    from .impact import calculate_impact_metrics
+
+    if request.user.role == UserRole.EDUCATIONAL_INSTITUTION:
+        txns = Transaction.objects.filter(
+            collection__listing__institution__user=request.user
+        ).select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ).order_by("-completed_at")
+    elif request.user.role == UserRole.RECYCLING_PARTNER:
+        txns = Transaction.objects.filter(
+            collection__partner__user=request.user
+        ).select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ).order_by("-completed_at")
+    elif request.user.is_superuser:
+        txns = Transaction.objects.all().select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ).order_by("-completed_at")
+    else:
+        return render(request, "403.html", status=403)
+
+    total_weight = txns.aggregate(total=Sum("quantity_kg"))["total"] or Decimal("0")
+    total_impact = calculate_impact_metrics(total_weight)
+
+    return render(
+        request,
+        "accounts/transaction_history.html",
+        {
+            "transactions": txns,
+            "total_weight": total_weight,
+            "total_impact": total_impact,
+            "transaction_count": txns.count(),
+        },
+    )
+
+
+@login_required
+def transaction_detail(request, transaction_id):
+    """
+    Detailed transaction view with collection context and impact breakdown.
+    """
+    txn = get_object_or_404(
+        Transaction.objects.select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ),
+        pk=transaction_id,
+    )
+    is_owner_institution = (
+        request.user.role == UserRole.EDUCATIONAL_INSTITUTION
+        and txn.collection.listing.institution.user_id == request.user.id
+    )
+    is_assigned_partner = (
+        request.user.role == UserRole.RECYCLING_PARTNER
+        and txn.collection.partner.user_id == request.user.id
+    )
+    if not (is_owner_institution or is_assigned_partner or request.user.is_superuser):
+        return render(request, "403.html", status=403)
+
+    return render(
+        request,
+        "accounts/transaction_detail.html",
+        {
+            "transaction": txn,
+            "collection": txn.collection,
+            "listing": txn.collection.listing,
+            "impact": txn.impact_metrics,
+            "is_owner_institution": is_owner_institution,
+            "is_assigned_partner": is_assigned_partner,
+        },
+    )
+
+
+@login_required
+def digital_record_view(request, transaction_id):
+    """
+    FR-12: Digital recycling certificate / verifiable impact record.
+    Clean, print-friendly and formal digital record of completed recycling activity.
+    """
+    txn = get_object_or_404(
+        Transaction.objects.select_related(
+            "collection__listing__institution__user",
+            "collection__partner__user",
+        ),
+        pk=transaction_id,
+    )
+    is_owner_institution = (
+        request.user.role == UserRole.EDUCATIONAL_INSTITUTION
+        and txn.collection.listing.institution.user_id == request.user.id
+    )
+    is_assigned_partner = (
+        request.user.role == UserRole.RECYCLING_PARTNER
+        and txn.collection.partner.user_id == request.user.id
+    )
+    if not (is_owner_institution or is_assigned_partner or request.user.is_superuser):
+        return render(request, "403.html", status=403)
+
+    return render(
+        request,
+        "accounts/digital_record.html",
+        {
+            "transaction": txn,
+            "collection": txn.collection,
+            "listing": txn.collection.listing,
+            "institution": txn.collection.listing.institution,
+            "partner": txn.collection.partner,
+            "impact": txn.impact_metrics,
+        },
+    )
+
+
 def permission_denied(request, exception=None):
+
     return render(request, "403.html", status=403)
+
+
+def landing_view(request):
+    completed_impact = Transaction.objects.aggregate(
+        completed_transfers=Count("pk"),
+        recovered_paper_kg=Sum("quantity_kg"),
+    )
+    verified_recycler_count = RecyclingProfile.objects.filter(
+        user__is_active=True,
+        user__verification_status=VerificationStatus.VERIFIED,
+    ).count()
+    return render(request, "accounts/landing.html", {
+        "landing_completed_transfers": completed_impact["completed_transfers"],
+        "landing_recovered_paper_kg": completed_impact["recovered_paper_kg"] or Decimal("0"),
+        "landing_verified_recyclers": verified_recycler_count,
+    })
+
+
+def about_view(request):
+    return render(request, "accounts/about.html")
+
+
+@require_GET
+def api_location_divisions(request):
+    """Return Bangladesh administrative divisions as JSON."""
+    return JsonResponse(get_divisions())
+
+
+@require_GET
+def api_location_districts(request, division):
+    """Return districts for a given Bangladesh division as JSON."""
+    return JsonResponse(get_districts(division))
+
+
+@require_GET
+def api_location_upazilas(request, district):
+    """Return upazilas/thanas for a given Bangladesh district as JSON."""
+    return JsonResponse(get_upazilas(district))
+
+
+@require_GET
+def api_location_search(request):
+    """Proxy Bangladesh street, campus, and landmark autocomplete queries."""
+    query = request.GET.get("q", "")
+    return JsonResponse(search_locations(query))
+
+
+@require_GET
+def api_location_reverse(request):
+    """Reverse geocode lat/lon coordinates to a structured Bangladesh address."""
+    lat = request.GET.get("lat")
+    lon = request.GET.get("lon")
+    data = reverse_geocode(lat, lon)
+    if data is None:
+        return JsonResponse({"error": "Valid lat and lon parameters are required."}, status=400)
+    return JsonResponse(data)
+
 

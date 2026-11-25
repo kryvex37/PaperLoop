@@ -72,6 +72,11 @@ class User(AbstractUser):
         "self", null=True, blank=True, on_delete=models.SET_NULL,
         related_name="verified_accounts",
     )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.ForeignKey(
+        "self", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="reviewed_accounts",
+    )
     verification_notes = models.TextField(blank=True)
 
     USERNAME_FIELD = "email"
@@ -309,3 +314,9 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"Transaction #{self.pk} ({self.quantity_kg} kg)"
+
+    @property
+    def impact_metrics(self):
+        from .impact import calculate_impact_metrics
+        return calculate_impact_metrics(self.quantity_kg)
+

@@ -1,5 +1,6 @@
 """Django tests for deterministic pilot data and all three PyTorch models."""
 import tempfile
+from unittest.mock import patch
 from io import StringIO
 from datetime import timedelta
 from pathlib import Path
@@ -63,10 +64,14 @@ class MLTrainingPipelineTests(SimpleTestCase):
                 "distance_km": 3.2, "capacity_utilization_ratio": .62, "paper_grade_match": 1,
                 "historical_fulfillment_rate": .98, "average_rating": 4.7,
                 "price_competitiveness": 1.1,
+                "history_prior_used": True, "rating_prior_used": True,
+                "price_prior_used": True,
             }])
             self.assertEqual(len(rank), 1)
             self.assertTrue(rank[0]["factors"])
             self.assertTrue(all(isinstance(reason, str) for reason in rank[0]["factors"]))
+            self.assertTrue(any("Neutral fulfillment prior" in reason for reason in rank[0]["factors"]))
+            self.assertTrue(any("Neutral rating prior" in reason for reason in rank[0]["factors"]))
 
             aggregation = AggregationInference(artifacts / "aggregation_scorer.pt").predict([{
                 "institution_count": 3, "combined_weight_kg": 2100,
@@ -164,6 +169,56 @@ class ExistingDiscoveryAIIntegrationTests(TestCase):
         self.assertIn("match_factors", results[0])
         self.assertIsNone(results[0].get("ai_relevance"))
 
+    @patch("ml_engine.inference.partner_match.PartnerMatchInference.predict", autospec=True)
+    def test_live_ranker_receives_location_capacity_and_collection_history(self, predict):
+        institution_user = User.objects.create_user(
+            email="ranked-institution@example.test", password="testpassword123",
+            role=UserRole.EDUCATIONAL_INSTITUTION, verification_status=VerificationStatus.VERIFIED,
+            organization_name="Ranked Pilot School", is_active=True,
+        )
+        institution = EducationalInstitution.objects.create(
+            user=institution_user, latitude=23.81, longitude=90.41,
+        )
+        listing = PaperListing.objects.create(
+            institution=institution, paper_type=PaperListing.PaperCategory.OFFICE,
+            quantity_kg=500, pickup_address="Campus", pickup_city="Dhaka",
+            status=PaperListing.Status.AVAILABLE,
+        )
+        partner_user = User.objects.create_user(
+            email="ranked-partner@example.test", password="testpassword123",
+            role=UserRole.RECYCLING_PARTNER, verification_status=VerificationStatus.VERIFIED,
+            organization_name="Ranked Recycler", is_active=True,
+        )
+        profile = RecyclingProfile.objects.create(
+            user=partner_user, accepted_paper_types=[PaperListing.PaperCategory.OFFICE],
+            service_area="Dhaka", maximum_capacity=1500, collection_available=True,
+            latitude=23.82, longitude=90.42,
+        )
+        history_listing = PaperListing.objects.create(
+            institution=institution, paper_type=PaperListing.PaperCategory.OFFICE,
+            quantity_kg=100, pickup_address="Campus", pickup_city="Dhaka",
+            status=PaperListing.Status.COMPLETED,
+        )
+        from accounts.models import Collection
+        Collection.objects.create(
+            listing=history_listing, partner=profile, status=Collection.Status.COLLECTED,
+        )
+        predict.return_value = [{"score": 0.91, "factors": ["Distance and history support this match"]}]
+
+        recommendations = get_recommended_partners(listing)
+
+        self.assertEqual(len(recommendations), 1)
+        recommendation = recommendations[0]
+        self.assertEqual(recommendation["ai_relevance"], 0.91)
+        self.assertEqual(recommendation["match_factors"], ["Distance and history support this match"])
+        features = predict.call_args.args[1]
+        self.assertAlmostEqual(features[0]["capacity_utilization_ratio"], 1 / 3, places=2)
+        self.assertEqual(features[0]["paper_grade_match"], 1)
+        self.assertAlmostEqual(features[0]["historical_fulfillment_rate"], 2 / 3, places=3)
+        self.assertEqual(features[0]["history_observation_count"], 1)
+        self.assertTrue(features[0]["rating_prior_used"])
+        self.assertTrue(features[0]["price_prior_used"])
+
 
 class LiveDjangoAIServicesTests(TestCase):
     def setUp(self):
@@ -192,6 +247,22 @@ class LiveDjangoAIServicesTests(TestCase):
         self.assertTrue(forecast["available"])
         self.assertEqual(len(forecast["weeks"]), 3)
         self.assertIn(forecast["source"], ("pytorch", "seasonal_baseline"))
+
+    def test_forecast_does_not_treat_missing_weeks_as_zero_waste(self):
+        today = timezone.localdate()
+        monday = today - timedelta(days=today.weekday())
+        for weeks_ago in (6, 4, 2, 0):
+            WasteRecord.objects.create(
+                institution=self.institution,
+                week_start=monday - timedelta(weeks=weeks_ago),
+                paper_grade=PaperListing.PaperCategory.OFFICE,
+                actual_weight_kg=50,
+            )
+
+        forecast = forecast_institution(self.institution)
+
+        self.assertFalse(forecast["available"])
+        self.assertIn("consecutive weeks", forecast["message"])
 
     def test_profile_and_bulk_pages_gracefully_handle_missing_geo_history(self):
         dashboard = self.client.get(reverse("accounts:institution_dashboard"))

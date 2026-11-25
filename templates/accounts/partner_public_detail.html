@@ -1,5 +1,84 @@
 {% extends "base.html" %}
-{% block title %}{{ partner.user.organization_name }} · PaperLoop{% endblock %}
+{% load static %}
+{% block title %}{{ partner.user.organization_name }} · Partner Profile · PaperLoop{% endblock %}
+
+{% block topbar_section %}Network{% endblock %}
+{% block topbar_title %}Recycler Profile{% endblock %}
+{% block body_class %}institution-body{% endblock %}
 {% block content %}
-<main class="container py-4" style="max-width: 900px;"><a class="link-success text-decoration-none small" href="{% url 'accounts:partner_directory' %}">← Back to partner directory</a><header class="my-4"><p class="text-uppercase text-success fw-bold small mb-1">Verified recycling / collection partner</p><h1 class="h2 fw-bold">{{ partner.user.organization_name }}</h1></header><div class="card border-0 shadow-sm"><div class="card-body p-4"><h2 class="h5">Contact</h2><p class="mb-1">{{ partner.user.contact_name|default:"Contact name not provided" }}</p>{% if partner.user.email %}<p class="mb-1">{{ partner.user.email }}</p>{% endif %}{% if partner.user.phone %}<p>{{ partner.user.phone }}</p>{% endif %}<h2 class="h5 mt-4">Accepted paper categories</h2><div class="d-flex flex-wrap gap-2">{% for value, label in paper_category_choices %}{% if value in partner.accepted_paper_types %}<span class="badge bg-light text-dark border">{{ label }}</span>{% endif %}{% endfor %}</div><h2 class="h5 mt-4">Service area</h2><p>{{ partner.service_area|default:"Not specified" }}</p><h2 class="h5 mt-4">Processing capacity</h2><p class="mb-1">{% if partner.maximum_capacity != None %}{{ partner.maximum_capacity }} {{ partner.get_capacity_unit_display }} {{ partner.get_capacity_period_display }} maximum{% elif partner.capacity_kg_per_month != None %}{{ partner.capacity_kg_per_month }} kg per month maximum{% else %}Flexible capacity{% endif %}</p><p>Currently available: {% if partner.available_capacity_kg == None %}Flexible{% else %}{{ partner.available_capacity_kg }} kg{% endif %}</p></div></div></main>
+<div class="container-fluid px-lg-4 py-4">
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-12 col-lg-3 col-xl-2">
+      {% include "accounts/components/institution_sidebar.html" with active_nav="partners" %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-12 col-lg-9 col-xl-10">
+      <div class="mb-4">
+        <a class="text-success text-decoration-none small fw-semibold" href="{% url 'accounts:partner_directory' %}">← Back to Partner Directory</a>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mt-2">
+          <div>
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <h1 class="h2 fw-bold text-dark mb-0">{{ partner.user.organization_name }}</h1>
+              <span class="status-pill status-pill-success">Verified Collector</span>
+            </div>
+            <p class="text-secondary mb-0">Authorized paper recycling and transport partner on PaperLoop.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-12 col-lg-8">
+          <!-- Overview Card -->
+          <div class="card-saas p-4 mb-4">
+            <h2 class="h5 fw-bold text-dark mb-3">Facility &amp; Operations</h2>
+            <div class="bg-light p-3 rounded-3 border mb-3">
+              <dl class="row small mb-0">
+                <dt class="col-4 text-muted">Service Area:</dt>
+                <dd class="col-8 text-dark mb-2">{{ partner.service_area|default:"Flexible Region" }}</dd>
+                <dt class="col-4 text-muted">Operational State:</dt>
+                <dd class="col-8 mb-2">
+                  {% if partner.collection_available %}
+                    <span class="text-success fw-bold">Active &amp; Accepting Pickups</span>
+                  {% else %}
+                    <span class="text-muted">Temporarily Paused</span>
+                  {% endif %}
+                </dd>
+                <dt class="col-4 text-muted">Available Capacity:</dt>
+                <dd class="col-8 text-success fw-bold mb-0">
+                  {% if partner.available_capacity_kg == None %}Flexible{% else %}{{ partner.available_capacity_kg }} kg{% endif %}
+                </dd>
+              </dl>
+            </div>
+            
+            <h3 class="h6 fw-bold text-dark mb-2">Accepted Paper Categories</h3>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              {% for value, label in paper_category_choices %}
+                {% if value in partner.accepted_paper_types %}
+                  <span class="badge text-bg-light border px-3 py-2 text-dark">{{ label }}</span>
+                {% endif %}
+              {% empty %}
+                <span class="text-muted small">No specific grade limitations recorded.</span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+          <!-- Contact Card -->
+          <div class="card-saas p-4">
+            <h3 class="h6 fw-bold text-dark mb-3">Liaison Contact</h3>
+            <div class="d-flex flex-column gap-2 small text-secondary">
+              <div><strong>Contact Person:</strong> {{ partner.user.contact_name|default:"Operations Desk" }}</div>
+              {% if partner.user.email %}<div><strong>Email:</strong> {{ partner.user.email }}</div>{% endif %}
+              {% if partner.user.phone %}<div><strong>Phone:</strong> {{ partner.user.phone }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 {% endblock %}

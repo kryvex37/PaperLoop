@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Digital Recycling Record · {{ transaction.reference }} · PaperLoop{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    body { background-color: #fff !important; }
+    .site-header, .site-footer, .no-print { display: none !important; }
+    .certificate-card { box-shadow: none !important; border: 2px solid #176B3A !important; margin: 0 !important; width: 100% !important; max-width: 100% !important; }
+    .page-shell { padding: 0 !important; margin: 0 !important; }
+    .digital-record-layout { padding: 0 !important; }
+    .digital-record-layout > .row { display: block !important; margin: 0 !important; }
+    .digital-record-main { width: 100% !important; padding: 0 !important; }
+  }
+  .certificate-card {
+    background: var(--color-card-bg);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--color-primary);
+    position: relative;
+    overflow: hidden;
+  }
+  .certificate-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 8px;
+    background: linear-gradient(90deg, var(--color-dark), var(--color-primary), var(--color-secondary));
+  }
+</style>
+{% endblock %}
+
+{% block topbar_section %}Records{% endblock %}
+{% block topbar_title %}Impact Certificate{% endblock %}
+{% block body_class %}{% if user.role == 'institution' %}institution-body{% elif user.role == 'partner' %}recycler-body{% endif %}{% endblock %}
+{% block content %}
+<div class="container-fluid px-lg-4 py-4 digital-record-layout"><div class="row g-4">
+  <aside class="col-12 col-lg-3 col-xl-2 no-print">
+    {% if user.role == 'institution' %}
+      {% include "accounts/components/institution_sidebar.html" with active_nav="transactions" %}
+    {% else %}
+      {% include "accounts/components/recycler_sidebar.html" with active_nav="transactions" %}
+    {% endif %}
+  </aside>
+  <main class="col-12 col-lg-9 col-xl-10 digital-record-main">
+  <!-- Navigation / Print actions -->
+  <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <a class="btn-saas btn-secondary" href="{% url 'accounts:transaction_detail' transaction.pk %}">← Back to Transaction</a>
+    <button class="btn-saas btn-primary d-flex align-items-center gap-2" onclick="window.print();">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      <span>Print / Save Certificate PDF</span>
+    </button>
+  </div>
+
+  <!-- UI-16: Digital Record / Certificate Card -->
+  <div class="certificate-card shadow-lg p-4 p-md-5 mx-auto" style="max-width: 860px;">
+    <!-- Certificate Header -->
+    <div class="text-center pb-4 mb-4 border-bottom">
+      <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-3" style="width: 64px; height: 64px;">
+        <span class="fs-2">♻️</span>
+      </div>
+      <span class="badge-saas badge-success mb-2">Verified Chain-of-Custody</span>
+      <h1 class="h2 fw-bold text-dark mb-1">Certificate of Sustainable Recycling</h1>
+      <p class="text-secondary small mb-0">Record Token: <strong class="text-dark">{{ transaction.reference }}</strong></p>
+    </div>
+
+    <!-- Overview Text -->
+    <p class="text-center text-secondary mb-4">
+      This certifies that <strong>{{ transaction.quantity_kg }} kg</strong> of <strong>{{ transaction.collection.listing.get_paper_type_display }}</strong> was formally collected from <strong>{{ transaction.collection.listing.institution.user.organization_name }}</strong> and securely transferred to <strong>{{ transaction.collection.partner.user.organization_name }}</strong> for sustainable industrial processing.
+    </p>
+
+    <!-- Impact Cards Grid -->
+    <div class="row g-3 mb-4 text-center">
+      <div class="col-6 col-md-4">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fs-4 fw-bold text-success">{{ impact.trees_saved }}</div>
+          <div class="small text-secondary">Trees Saved</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fs-4 fw-bold text-success">{{ impact.water_liters_saved }} L</div>
+          <div class="small text-secondary">Water Conserved</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fs-4 fw-bold text-success">{{ impact.energy_kwh_saved }} kWh</div>
+          <div class="small text-secondary">Energy Preserved</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fs-4 fw-bold text-success">{{ impact.co2_avoided_kg }} kg</div>
+          <div class="small text-secondary">CO₂e Avoided</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fs-4 fw-bold text-success">{{ impact.landfill_m3_saved }} m³</div>
+          <div class="small text-secondary">Landfill Space Saved</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-4">
+        <div class="p-3 bg-light rounded-3 border">
+          <div class="fs-4 fw-bold text-success">100%</div>
+          <div class="small text-secondary">Diversion Verified</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auditable Metadata Table -->
+    <div class="bg-light p-3 rounded-3 border mb-4">
+      <dl class="row small mb-0">
+        <dt class="col-4 text-muted">Completed Timestamp:</dt>
+        <dd class="col-8 text-dark mb-2">{{ transaction.completed_at|date:"F j, Y · g:i A" }}</dd>
+        <dt class="col-4 text-muted">Collection Identifier:</dt>
+        <dd class="col-8 text-dark mb-2">#{{ transaction.collection.pk }}</dd>
+        <dt class="col-4 text-muted">Issuing Authority:</dt>
+        <dd class="col-8 text-dark mb-0">PaperLoop Verified Environmental Network</dd>
+      </dl>
+    </div>
+
+    <div class="text-center small text-muted pt-3 border-top">
+      &copy; {% now "Y" %} PaperLoop Inc. Verified circular economy certificate.
+    </div>
+  </div>
+  </main>
+</div></div>
+{% endblock %}

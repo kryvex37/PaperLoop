@@ -1,7 +1,16 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Partner Profile &amp; Capacity · PaperLoop{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="{% static 'css/bd-location.css' %}?v=1">
+{% endblock %}
+{% block topbar_section %}Account{% endblock %}
+{% block topbar_title %}Profile &amp; Capacity Settings{% endblock %}
+{% block body_class %}recycler-body{% endblock %}
 {% block content %}
-<main class="container py-4" style="max-width: 800px;">
+<div class="container-fluid px-lg-4 py-4"><div class="row g-4"><div class="col-12 col-lg-3 col-xl-2">{% include "accounts/components/recycler_sidebar.html" with active_nav="settings" %}</div><div class="col-12 col-lg-9 col-xl-10"><div class="recycler-profile-settings">
+  {% include "accounts/components/theme_switcher.html" with variant="settings" %}
   <a class="link-success text-decoration-none small" href="{% url 'accounts:partner_dashboard' %}">← Back to dashboard</a>
   <header class="my-4">
     <p class="text-uppercase text-success fw-bold small mb-1">Recycling / Collection Partner</p>
@@ -28,11 +37,71 @@
           {% for field in form %}{% if field.name == 'maximum_capacity' or field.name == 'current_allocated_load' or field.name == 'capacity_unit' or field.name == 'capacity_period' %}
           <div class="col-12 col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
           {% endif %}{% endfor %}
-          <div class="col-12"><label class="form-label" for="{{ form.service_area.id_for_label }}">{{ form.service_area.label }}</label>{{ form.service_area }}{% if form.service_area.help_text %}<div class="form-text">{{ form.service_area.help_text }}</div>{% endif %}{% for error in form.service_area.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>
+          <div class="col-12">
+            <label class="form-label" for="{{ form.service_area.id_for_label }}">{{ form.service_area.label }} <span class="text-danger">*</span></label>
+            <div class="d-none">{{ form.service_area }}</div>
+            <div class="bd-loc-panel"
+                 data-bd-location-picker
+                 data-mode="partner"
+                 data-service-area-id="{{ form.service_area.id_for_label }}"
+                 data-lat-id="{{ form.latitude.id_for_label }}"
+                 data-lon-id="{{ form.longitude.id_for_label }}"
+                 data-api-divisions="{% url 'accounts:api_location_divisions' %}"
+                 data-api-districts="/accounts/api/locations/districts/__DIV__/"
+                 data-api-upazilas="/accounts/api/locations/upazilas/__DIST__/"
+                 data-api-search="{% url 'accounts:api_location_search' %}">
+              <div class="bd-loc-panel-header">
+                <span class="bd-loc-panel-title">Bangladesh Operational Areas</span>
+                <span class="bd-loc-hint">Select Division → District → Upazila and click + Add Area</span>
+              </div>
+              <div class="row g-2 align-items-end mb-3">
+                <div class="col-12 col-md-3">
+                  <label class="bd-loc-label" for="partner-bd-division">Division</label>
+                  <select id="partner-bd-division" class="form-select" data-bd-division>
+                    <option value="">Loading…</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-3">
+                  <label class="bd-loc-label" for="partner-bd-district">District</label>
+                  <select id="partner-bd-district" class="form-select" data-bd-district disabled>
+                    <option value="">Select District</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="bd-loc-label" for="partner-bd-upazila">Upazila / Thana</label>
+                  <select id="partner-bd-upazila" class="form-select" data-bd-upazila disabled>
+                    <option value="">Select Upazila / Thana</option>
+                  </select>
+                </div>
+                <div class="col-12 col-md-2 d-grid">
+                  <button type="button" class="bd-loc-add-btn" data-bd-add-area disabled>+ Add Area</button>
+                </div>
+              </div>
+              <div class="mb-3">
+                <div class="bd-loc-label">Selected Service Areas</div>
+                <div class="bd-loc-pills" data-bd-pills></div>
+              </div>
+              <hr class="border-secondary border-opacity-25 my-3">
+              <div class="bd-loc-panel-header">
+                <span class="bd-loc-panel-title">Hub / Warehouse Pin Map</span>
+                <span class="bd-coord-badge" data-bd-coord-readout>{% if form.latitude.value and form.longitude.value %}{{ form.latitude.value }}, {{ form.longitude.value }}{% else %}Click map to set pin{% endif %}</span>
+              </div>
+              <div class="bd-autocomplete-wrap mb-3">
+                <label class="bd-loc-label" for="partner-bd-search">Search Hub Road, Area, or Landmark</label>
+                <input id="partner-bd-search" type="search" class="form-control" placeholder="e.g. Tejgaon Industrial Area, Dhaka or Savar EPZ…" autocomplete="off" data-bd-search>
+                <div class="bd-autocomplete-results" data-bd-results></div>
+              </div>
+              <div class="bd-map-box mb-2" data-bd-map></div>
+              <p class="bd-loc-hint mb-0">Click anywhere on the map or drag the emerald marker to set required pickup hub coordinates.</p>
+              <div class="bd-loc-error-banner" role="alert" data-bd-error></div>
+            </div>
+            {% if form.service_area.help_text %}<div class="form-text">{{ form.service_area.help_text }}</div>{% endif %}
+            {% for error in form.service_area.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+          </div>
         </div>
         <p class="small text-secondary mt-2 mb-0">Available capacity is calculated as maximum capacity minus allocated load.</p>
       </fieldset>
-      <fieldset class="mb-4"><legend class="h5 fw-bold">Pickup Coordinates</legend><div class="row g-3">{% for field in form %}{% if field.name == 'latitude' or field.name == 'longitude' %}<div class="col-12 col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div></fieldset>
+      <fieldset class="mb-4"><legend class="h5 fw-bold">Pickup Coordinates <span class="text-danger">*</span></legend><div class="row g-3">{% for field in form %}{% if field.name == 'latitude' or field.name == 'longitude' %}<div class="col-12 col-md-6"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }} <span class="text-danger">*</span></label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}</div>{% endif %}{% endfor %}</div></fieldset>
       <fieldset>
         <legend class="h5 fw-bold">Accepted Paper Categories</legend>
         <div class="row g-2">{% for widget in form.accepted_paper_types %}<div class="col-12 col-sm-6"><div class="form-check border rounded p-3">{{ widget.tag }}<label class="form-check-label ms-1" for="{{ widget.id_for_label }}">{{ widget.choice_label }}</label></div></div>{% endfor %}</div>
@@ -42,5 +111,7 @@
     </div>
     <div class="card-footer bg-light border-0 p-3 d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{% url 'accounts:partner_dashboard' %}">Cancel</a><button class="btn btn-success" type="submit">Save profile</button></div>
   </form>
-</main>
+</div></div></div></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+<script src="{% static 'js/bd-location-picker.js' %}?v=1" defer></script>
 {% endblock %}

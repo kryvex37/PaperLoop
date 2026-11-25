@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="760" viewBox="0 0 960 760" fill="none">
+  <defs>
+    <radialGradient id="mist" cx="0" cy="0" r="1" gradientTransform="matrix(517 397 -448 584 614 175)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#CDE7D2" stop-opacity=".72"/>
+      <stop offset=".55" stop-color="#EAF4ED" stop-opacity=".42"/>
+      <stop offset="1" stop-color="#EAF4ED" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="paper" x1="355" x2="653" y1="262" y2="571" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#238B50" stop-opacity=".08"/>
+      <stop offset="1" stop-color="#0D392C" stop-opacity=".02"/>
+    </linearGradient>
+    <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r=".7" fill="#176B3A" fill-opacity=".18"/>
+    </pattern>
+  </defs>
+  <path d="M548 44c148-17 293 76 329 217 38 148-18 313-142 405-108 81-267 93-395 43C208 662 91 573 82 441 72 300 165 171 296 103 375 62 462 53 548 44Z" fill="url(#mist)"/>
+  <path d="M635 91c112 45 194 152 196 274 2 113-75 225-177 284" stroke="#176B3A" stroke-opacity=".16" stroke-width="1.2"/>
+  <path d="M679 65c143 71 235 208 220 352-9 87-49 165-110 225" stroke="#0D392C" stroke-opacity=".1" stroke-width="1.2"/>
+  <circle cx="574" cy="371" r="211" stroke="#176B3A" stroke-opacity=".1"/>
+  <circle cx="574" cy="371" r="245" stroke="#176B3A" stroke-opacity=".08" stroke-dasharray="2 8"/>
+  <path d="m366 275 195-67 147 113-32 198-194 74-151-124 35-194Z" fill="url(#paper)" stroke="#176B3A" stroke-opacity=".09"/>
+  <path d="m514 214 14 171 162-64M367 276l161 109 148 134" stroke="#176B3A" stroke-opacity=".09"/>
+  <path d="M414 555c63 40 132 48 201 25" stroke="#238B50" stroke-opacity=".19" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="749" cy="244" r="5" fill="#238B50" fill-opacity=".42"/>
+  <circle cx="347" cy="558" r="4" fill="#176B3A" fill-opacity=".28"/>
+  <path d="M743 244a34 34 0 0 1-17 29" stroke="#238B50" stroke-opacity=".2" stroke-width="1.2"/>
+  <path d="M0 0h960v760H0z" fill="url(#dots)" opacity=".22"/>
+</svg>

@@ -69,13 +69,44 @@ def get_recommended_partners(listing):
     recommendations = []
 
     for partner in partners:
+        collections = list(partner.collections.all())
         pending_load = sum(
-            (collection.listing.quantity_kg for collection in partner.collections.all()
+            (collection.listing.quantity_kg for collection in collections
              if collection.status in ACTIVE_ALLOCATION_STATUSES),
             Decimal("0"),
         )
         if not partner_is_eligible(partner, listing, pending_load):
             continue
+
+        resolved_collections = [
+            collection for collection in collections
+            if collection.status in (Collection.Status.COLLECTED, Collection.Status.REJECTED)
+        ]
+        fulfilled_count = sum(
+            collection.status == Collection.Status.COLLECTED
+            for collection in resolved_collections
+        )
+        if resolved_collections:
+            fulfillment_rate = (fulfilled_count + 1) / (len(resolved_collections) + 2)
+        elif partner.historical_fulfillment_rate is not None:
+            fulfillment_rate = float(partner.historical_fulfillment_rate)
+        else:
+            fulfillment_rate = 0.5
+        if resolved_collections:
+            history_detail = (
+                f"{fulfilled_count} of {len(resolved_collections)} resolved pickups completed; "
+                f"smoothed fulfillment estimate {fulfillment_rate:.0%}"
+            )
+        elif partner.historical_fulfillment_rate is not None:
+            history_detail = f"No resolved pickup history; stored fulfillment estimate {fulfillment_rate:.0%}"
+        else:
+            history_detail = "No resolved pickup history; neutral fulfillment prior used"
+        history_features = {
+            "historical_fulfillment_rate": fulfillment_rate,
+            "history_observation_count": len(resolved_collections),
+            "history_completed_count": fulfilled_count,
+            "history_prior_used": not resolved_collections and partner.historical_fulfillment_rate is None,
+        }
 
         capacity = capacity_available_kg(partner, pending_load)
         category_label = listing.get_paper_type_display()
@@ -88,10 +119,41 @@ def get_recommended_partners(listing):
             capacity_reason = f"✓ Capacity ({capacity} kg available) covers listing"
         location_score = 30 if (listing.pickup_city or "").casefold() in (partner.service_area or "").casefold() else 15
         match_score = min(98, 40 + 30 + location_score)
+
+        # Structured factor breakdowns for clean visual rendering (FR-05/FR-08 UI polish)
+        factor_breakdown = {
+            "capacity": {
+                "label": "Capacity Match",
+                "status": "High" if capacity is None or capacity >= (listing.quantity_kg * Decimal("2")) else "Sufficient",
+                "detail": f"{capacity} kg available" if capacity is not None else "Flexible monthly capacity",
+                "passed": True,
+            },
+            "location": {
+                "label": "Location & Service Area",
+                "status": "In Service Area" if location_score == 30 else "Regional Coverage",
+                "detail": f"Services {partner.service_area or area_label}",
+                "passed": True,
+            },
+            "category": {
+                "label": "Material Grade Acceptance",
+                "status": "Verified Match",
+                "detail": f"Accepts {category_label}",
+                "passed": True,
+            },
+            "history": {
+                "label": "Verification & History",
+                "status": "Has completed history" if resolved_collections else "New to marketplace",
+                "detail": history_detail,
+                "passed": True,
+            },
+        }
+
         recommendations.append({
             "partner": partner,
             "match_score": match_score,
             "available_capacity_kg": capacity,
+            "factor_breakdown": factor_breakdown,
+            "history_features": history_features,
             "match_reasons": [
                 f"✓ Accepts {category_label}",
                 capacity_reason,
@@ -100,9 +162,9 @@ def get_recommended_partners(listing):
             ],
         })
 
-    # Only invoke the learned ranker when all required candidate features are
-    # genuinely available. Current FR-06/08 schema lacks coordinates, pricing,
-    # and fulfillment history, so it safely retains the established baseline.
+    # Location and available capacity must be present for learned ranking.
+    # Missing marketplace history, ratings, and price data use explicit neutral
+    # priors so new partners can still be ranked without fabricated claims.
     feature_rows = []
     complete_features = True
     for item in recommendations:
@@ -116,23 +178,34 @@ def get_recommended_partners(listing):
             listing_lon = listing.institution.longitude
         partner_lat = getattr(partner, "latitude", None)
         partner_lon = getattr(partner, "longitude", None)
-        required = (listing_lat, listing_lon, partner_lat, partner_lon,
-                    getattr(partner, "historical_fulfillment_rate", None),
-                    getattr(partner, "average_rating", None),
-                    getattr(partner, "price_competitiveness", None))
-        if capacity is None or any(value is None for value in required):
+        coordinates = (listing_lat, listing_lon, partner_lat, partner_lon)
+        if any(value is None for value in coordinates):
+            complete_features = False
+            break
+        if not (-90 <= float(listing_lat) <= 90 and -90 <= float(partner_lat) <= 90
+                and -180 <= float(listing_lon) <= 180 and -180 <= float(partner_lon) <= 180):
             complete_features = False
             break
         lat1, lon1, lat2, lon2 = map(float, (listing_lat, listing_lon, partner_lat, partner_lon))
         dlat, dlon = radians(lat2 - lat1), radians(lon2 - lon1)
         haversine = 2 * 6371 * asin(sqrt(sin(dlat / 2) ** 2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon / 2) ** 2))
+        history = item["history_features"]
+        has_capacity_limit = capacity is not None and capacity > 0
         feature_rows.append({
             "distance_km": haversine,
-            "capacity_utilization_ratio": float(listing.quantity_kg / capacity),
+            "capacity_utilization_ratio": (
+                float(listing.quantity_kg / capacity) if has_capacity_limit else 0.0
+            ),
             "paper_grade_match": 1,
-            "historical_fulfillment_rate": float(partner.historical_fulfillment_rate),
-            "average_rating": float(partner.average_rating),
-            "price_competitiveness": float(partner.price_competitiveness),
+            **history,
+            "average_rating": float(partner.average_rating) if partner.average_rating is not None else 3.0,
+            "price_competitiveness": (
+                float(partner.price_competitiveness)
+                if partner.price_competitiveness is not None else 1.0
+            ),
+            "rating_prior_used": partner.average_rating is None,
+            "price_prior_used": partner.price_competitiveness is None,
+            "capacity_is_flexible": not has_capacity_limit,
         })
 
     if complete_features and feature_rows:
@@ -144,7 +217,12 @@ def get_recommended_partners(listing):
     if ranked is None:
         for item in recommendations:
             item["match_factors"] = list(item["match_reasons"])
-        recommendations.sort(key=lambda item: item["partner"].user.organization_name.casefold())
+        recommendations.sort(
+            key=lambda item: (
+                -item["match_score"],
+                item["partner"].user.organization_name.casefold(),
+            )
+        )
     else:
         for item, result in zip(recommendations, ranked):
             item["ai_relevance"] = round(result["score"], 4)

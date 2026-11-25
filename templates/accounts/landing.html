@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}PaperLoop — Give Paper a Better Next Life{% endblock %}
+{% block body_class %}landing-page{% endblock %}
+
+{% block content %}
+<div class="landing-container">
+  <section class="landing-hero paperloop-shape-surface" aria-labelledby="landing-title">
+    <div class="landing-wrap landing-hero-grid">
+      <div class="landing-hero-copy" data-reveal>
+        <span class="landing-eyebrow"><span class="eyebrow-spark" aria-hidden="true"></span> A smarter paper loop for education</span>
+        <h1 id="landing-title">Give Paper a <span>Better Next Life.</span></h1>
+        <p>Connecting educational institutions with recycling partners through intelligent paper-waste management.</p>
+        <div class="landing-actions">
+          {% if user.is_authenticated %}
+            <a class="landing-button landing-button-primary" href="{% url 'accounts:dashboard' %}">Start Recycling <span aria-hidden="true">↗</span></a>
+          {% else %}
+            <a class="landing-button landing-button-primary" href="{% url 'accounts:register' %}">Start Recycling <span aria-hidden="true">↗</span></a>
+          {% endif %}
+          <a class="landing-button landing-button-outline" href="#how-it-works">Explore How It Works <span aria-hidden="true">↓</span></a>
+        </div>
+        <div class="hero-proof" aria-label="PaperLoop platform approach">
+          <span class="hero-proof-mark" aria-hidden="true">01</span>
+          <span>From paper listing to verified handoff,<br>one clear workflow.</span>
+        </div>
+      </div>
+
+      <div class="hero-art" role="img" aria-label="Illustration of a campus listing paper and connecting with suitable recycling partners" data-reveal style="--reveal-delay: 120ms">
+        <div class="hero-art-grid" aria-hidden="true"></div>
+        <div class="hero-art-orbit hero-art-orbit-one" data-gsap-motion="rotate" aria-hidden="true"></div>
+        <div class="hero-art-orbit hero-art-orbit-two" data-gsap-motion="orbit" aria-hidden="true"></div>
+        <div class="hero-art-sun" data-gsap-motion="breathe" aria-hidden="true"></div>
+        <div class="hero-paper-stack" data-gsap-motion="float" aria-hidden="true"><span></span><span></span><span></span></div>
+
+        <div class="hero-mini-card hero-campus-card float-soft">
+          <span class="mini-card-icon icon-campus" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="m3 9 9-5 9 5-9 5-9-5Z"/><path d="M6 11v5c3.4 2.8 8.6 2.8 12 0v-5M21 9v6"/></svg>
+          </span>
+          <span><strong>Campus</strong><small>Paper ready to list</small></span>
+          <span class="mini-status-dot" aria-hidden="true"></span>
+        </div>
+
+        <div class="hero-listing-card float-soft float-delay-one">
+          <div class="listing-card-top"><span class="ui-label">PAPER LISTING</span><span class="listing-dots" aria-hidden="true">•••</span></div>
+          <div class="listing-card-document" aria-hidden="true"><span></span><span></span><span></span></div>
+          <strong>Office paper</strong>
+          <div class="listing-card-bottom"><span>Collection details</span><span class="mini-arrow" aria-hidden="true">↗</span></div>
+        </div>
+
+        <div class="hero-match-card float-soft float-delay-two">
+          <div class="match-card-head"><span class="match-spark" aria-hidden="true">✳</span><span>AI MATCHING</span><span class="match-live"><i></i> Ready</span></div>
+          <strong>Suitable recyclers</strong>
+          <div class="match-signal"><span class="signal-check" aria-hidden="true">✓</span><span>Paper categories</span><b>Aligned</b></div>
+          <div class="match-signal"><span class="signal-check" aria-hidden="true">✓</span><span>Service area</span><b>Nearby</b></div>
+          <div class="match-signal"><span class="signal-check" aria-hidden="true">✓</span><span>Available capacity</span><b>Considered</b></div>
+        </div>
+
+        <div class="hero-route-line" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="hero-art-caption"><span class="caption-dot"></span> A connected collection journey</div>
+      </div>
+    </div>
+    <div class="hero-bottom-rule landing-wrap" aria-hidden="true"><span>EDUCATION</span><span>×</span><span>RECOVERY</span><span>×</span><span>ACCOUNTABILITY</span></div>
+  </section>
+
+  <section class="landing-ecosystem landing-section" aria-labelledby="ecosystem-title">
+    <div class="landing-wrap">
+      <div class="section-heading section-heading-split" data-reveal>
+        <div><span class="landing-eyebrow">One connected ecosystem</span><h2 id="ecosystem-title">A clearer path for every sheet.</h2></div>
+        <p>PaperLoop brings the people, listings and collection records together, so a campus surplus can move through a coordinated process.</p>
+      </div>
+
+      <div class="ecosystem-board" data-reveal style="--reveal-delay: 100ms">
+        <div class="ecosystem-board-pattern" aria-hidden="true"></div>
+        <div class="ecosystem-ring ecosystem-ring-a" aria-hidden="true"></div>
+        <div class="ecosystem-ring ecosystem-ring-b" aria-hidden="true"></div>
+        <div class="ecosystem-center-node">
+          <span class="loop-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <strong>Connected<br>paper flow</strong>
+          <small>List · match · collect</small>
+        </div>
+        <article class="ecosystem-node node-institution">
+          <span class="node-icon node-icon-campus" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01"/></svg></span>
+          <div><small>01 / INSTITUTION</small><strong>Educational campus</strong><span>Share available paper</span></div>
+        </article>
+        <article class="ecosystem-node node-listing">
+          <span class="node-icon node-icon-paper" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg></span>
+          <div><small>02 / PAPER LISTING</small><strong>Material &amp; pickup info</strong><span>Details in one place</span></div>
+        </article>
+        <article class="ecosystem-node node-ai">
+          <span class="node-icon node-icon-ai" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.64 5.64l2.12 2.12m8.48 8.48 2.12 2.12m0-12.72-2.12 2.12m-8.48 8.48-2.12 2.12"/><circle cx="12" cy="12" r="4"/></svg></span>
+          <div><small>03 / AI MATCH</small><strong>Relevant partners</strong><span>Capacity &amp; location signals</span></div>
+        </article>
+        <article class="ecosystem-node node-recycler">
+          <span class="node-icon node-icon-recycler" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m8 5 2-2 2 2M10 3v4l-3 5M5 12H3l2-3M5 12l3 2M15 5l2 1 1 3M17 6l-3 2 2 5M18 14l1 2-2 2M19 16h-4l-3-5M7 18l-2 1-2-2M5 19l1-4 4-2"/></svg></span>
+          <div><small>04 / RECYCLER</small><strong>Verified partner</strong><span>Accept and coordinate</span></div>
+        </article>
+        <article class="ecosystem-node node-collection">
+          <span class="node-icon node-icon-collection" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M3 4h18v4H3zM5 8v12h14V8M9 12h6M9 16h6"/></svg></span>
+          <div><small>05 / COLLECTION</small><strong>Track each handoff</strong><span>From request to record</span></div>
+        </article>
+        <svg class="ecosystem-connectors" viewBox="0 0 1000 560" fill="none" aria-hidden="true"><path d="M250 145 425 245M750 135 575 245M240 395l185-85m335 90-185-85M500 365v-66" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 7"/><circle cx="250" cy="145" r="4" fill="currentColor"/><circle cx="750" cy="135" r="4" fill="currentColor"/><circle cx="240" cy="395" r="4" fill="currentColor"/><circle cx="760" cy="400" r="4" fill="currentColor"/></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-impact landing-section" aria-labelledby="impact-title">
+    <div class="landing-wrap">
+      <div class="impact-heading" data-reveal>
+        <div><span class="landing-eyebrow landing-eyebrow-light">Measured in the platform</span><h2 id="impact-title">Real activity.<br><em>Clear records.</em></h2></div>
+        <p>These figures come from completed PaperLoop transaction records and verified recycler profiles.</p>
+      </div>
+      <div class="impact-grid">
+        <article class="impact-metric" data-reveal style="--reveal-delay: 60ms">
+          <span class="metric-index">01</span>
+          <strong class="metric-number"><span data-counter data-target="{{ landing_completed_transfers }}">{{ landing_completed_transfers }}</span></strong>
+          <span class="metric-unit">completed transfers</span>
+          <p>Recorded paper handoffs in the platform.</p>
+        </article>
+        <article class="impact-metric impact-metric-highlight" data-reveal style="--reveal-delay: 130ms">
+          <span class="metric-index">02</span>
+          <strong class="metric-number"><span data-counter data-decimals="2" data-target="{{ landing_recovered_paper_kg|floatformat:'-2' }}">{{ landing_recovered_paper_kg|floatformat:"-2" }}</span><small>kg</small></strong>
+          <span class="metric-unit">paper recorded</span>
+          <p>Total quantity from completed transaction records.</p>
+        </article>
+        <article class="impact-metric" data-reveal style="--reveal-delay: 200ms">
+          <span class="metric-index">03</span>
+          <strong class="metric-number"><span data-counter data-target="{{ landing_verified_recyclers }}">{{ landing_verified_recyclers }}</span></strong>
+          <span class="metric-unit">verified recyclers</span>
+          <p>Active recycler profiles verified on PaperLoop.</p>
+        </article>
+      </div>
+      <p class="impact-footnote">Live counts from platform records. No estimated environmental savings are included.</p>
+    </div>
+  </section>
+
+  <section class="landing-features landing-section" id="features" aria-labelledby="features-title">
+    <div class="landing-wrap">
+      <div class="section-heading section-heading-split" data-reveal>
+        <div><span class="landing-eyebrow">A practical toolkit</span><h2 id="features-title">The whole paper journey, in view.</h2></div>
+        <p>Purpose-built tools help institutions and recycling partners coordinate each stage without losing the details.</p>
+      </div>
+      <div class="feature-editorial-grid">
+        <article class="feature-editorial feature-editorial-large" data-reveal>
+          <span class="feature-index">01 / MANAGE</span>
+          <div class="feature-editorial-icon"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M27 5H12a4 4 0 0 0-4 4v30a4 4 0 0 0 4 4h24a4 4 0 0 0 4-4V18L27 5Z"/><path d="M27 5v13h13M15 26h18M15 33h13"/></svg></div>
+          <h3>Paper waste management</h3>
+          <p>List paper by material, quantity, pickup location and collection window. Keep the information partners need together.</p>
+          <a href="{% url 'accounts:register' %}" class="feature-link">Create a listing <span aria-hidden="true">↗</span></a>
+          <span class="feature-watermark" aria-hidden="true">01</span>
+        </article>
+        <article class="feature-editorial feature-editorial-green" data-reveal style="--reveal-delay: 90ms">
+          <span class="feature-index">02 / MATCH</span>
+          <div class="feature-editorial-icon"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><circle cx="24" cy="24" r="18"/><path d="m24 12 3.3 8.7L36 24l-8.7 3.3L24 36l-3.3-8.7L12 24l8.7-3.3L24 12Z"/></svg></div>
+          <h3>AI recycler matching</h3>
+          <p>Surface suitable partners using paper categories, service area and available processing capacity.</p>
+          <a href="#ai-matching" class="feature-link">See how matching works <span aria-hidden="true">↗</span></a>
+          <span class="feature-watermark" aria-hidden="true">02</span>
+        </article>
+        <article class="feature-editorial feature-editorial-wide" data-reveal>
+          <span class="feature-index">03 / COORDINATE</span>
+          <div class="feature-editorial-icon"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M7 10h34v8H7zM11 18v23h26V18M18 26h12M18 33h12"/></svg></div>
+          <h3>Collection management</h3>
+          <p>Coordinate requests, acceptance, scheduling and collection details between institutions and partners.</p>
+          <a href="#how-it-works" class="feature-link">Explore the process <span aria-hidden="true">↗</span></a>
+          <span class="feature-watermark" aria-hidden="true">03</span>
+        </article>
+        <article class="feature-editorial feature-editorial-forest" data-reveal style="--reveal-delay: 90ms">
+          <span class="feature-index">04 / VERIFY</span>
+          <div class="feature-editorial-icon"><svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 5 39 11v11c0 10-6.5 17-15 21C15.5 39 9 32 9 22V11l15-6Z"/><path d="m17 24 5 5 10-11"/></svg></div>
+          <h3>Transaction tracking</h3>
+          <p>Keep a digital record of completed transfers and the collection details connected to each one.</p>
+          <a href="{% url 'accounts:login' %}" class="feature-link">View your records <span aria-hidden="true">↗</span></a>
+          <span class="feature-watermark" aria-hidden="true">04</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-process landing-section" id="how-it-works" aria-labelledby="process-title">
+    <div class="landing-wrap">
+      <div class="process-intro" data-reveal><span class="landing-eyebrow">Three steps, one better loop</span><h2 id="process-title">From surplus to next use.</h2><p>A straightforward process makes paper recovery easier to organize and verify.</p></div>
+      <div class="process-track">
+        <article class="process-step" data-reveal>
+          <span class="process-step-no">01</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M23 4H11a3 3 0 0 0-3 3v26a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V13L23 4Z"/><path d="M23 4v9h9M14 21h14M14 27h11"/></svg></div>
+          <h3>List paper waste</h3><p>Add paper type, quantity, pickup details and availability to a listing.</p>
+        </article>
+        <article class="process-step" data-reveal style="--reveal-delay: 100ms">
+          <span class="process-step-no">02</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="15"/><path d="m20 10 2.8 7.2L30 20l-7.2 2.8L20 30l-2.8-7.2L10 20l7.2-2.8L20 10Z"/></svg></div>
+          <h3>Find suitable recyclers</h3><p>Review partners matched around material fit, service area and capacity.</p>
+        </article>
+        <article class="process-step" data-reveal style="--reveal-delay: 200ms">
+          <span class="process-step-no">03</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M5 8h30v7H5zM9 15v20h22V15M15 22h10M15 28h10"/></svg></div>
+          <h3>Complete collection</h3><p>Coordinate pickup, confirm the transfer and keep the transaction record.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-ai landing-section" id="ai-matching" aria-labelledby="ai-title">
+    <div class="landing-wrap ai-showcase-grid">
+      <div class="ai-copy" data-reveal><span class="landing-eyebrow">A match with a reason</span><h2 id="ai-title">Find the right partner for the paper you have.</h2><p>Recommendations bring relevant recycling partners into view and show the signals behind a match.</p>
+        <ul class="ai-benefit-list"><li><span>✓</span><div><strong>Material fit</strong><small>Compare paper categories accepted by each partner.</small></div></li><li><span>✓</span><div><strong>Service area</strong><small>Consider location and partner coverage.</small></div></li><li><span>✓</span><div><strong>Capacity context</strong><small>Review available processing capacity before coordinating.</small></div></li></ul>
+        <a class="text-link-arrow" href="{% url 'accounts:partner_directory' %}">Explore the recycler network <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="ai-preview-wrap" data-reveal style="--reveal-delay: 120ms">
+        <div class="ai-preview-orb" data-gsap-motion="breathe" aria-hidden="true"></div>
+        <div class="ai-preview-window">
+          <div class="preview-sidebar"><span class="preview-brand-mark" aria-hidden="true"><i></i><i></i></span><span class="preview-sidebar-line active"></span><span class="preview-sidebar-line"></span><span class="preview-sidebar-line"></span><span class="preview-sidebar-spacer"></span><span class="preview-avatar">PL</span></div>
+          <div class="preview-main"><div class="preview-topline"><span>RECOMMENDATIONS</span><span class="preview-status"><i></i> Ready to review</span></div><h3>Partners for your listing</h3><p>Review how each recycler aligns with your requirements.</p>
+            <article class="preview-partner-card preview-partner-best"><div class="partner-avatar partner-avatar-one">R</div><div class="partner-data"><strong>Verified recycler</strong><span>Paper categories match</span></div><span class="partner-fit-tag">Strong fit</span><div class="partner-reasons"><span>✓ Material</span><span>✓ Service area</span><span>✓ Capacity</span></div></article>
+            <article class="preview-partner-card"><div class="partner-avatar partner-avatar-two">R</div><div class="partner-data"><strong>Verified recycler</strong><span>More details available</span></div><span class="partner-fit-tag partner-fit-neutral">Review fit</span></article>
+            <div class="preview-explain"><span class="explain-icon">i</span><span><strong>Understand each recommendation</strong><small>Compare partner details before sending a collection request.</small></span><span class="explain-arrow">↗</span></div>
+          </div>
+        </div>
+        <span class="preview-note">Illustrative preview · recommendations use listing and partner details</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-sustainability landing-section" id="sustainability" aria-labelledby="sustainability-title">
+    <div class="landing-wrap sustainability-panel">
+      <div class="sustainability-art" aria-hidden="true"><div class="sustainability-disc"><span class="sustainability-ring ring-one" data-gsap-motion="rotate"></span><span class="sustainability-ring ring-two" data-gsap-motion="orbit"></span><svg viewBox="0 0 160 160" fill="none"><path d="M109 32C75 36 47 53 42 81c-4 24 14 43 38 39 31-6 45-44 29-88Z"/><path d="M48 114c13-20 29-37 52-53M82 91l-2-24M67 108l-20-7"/></svg><span class="disc-center">PAPER<br>IN MOTION</span></div><span class="sustainability-orbit-dot dot-a" data-gsap-motion="breathe"></span><span class="sustainability-orbit-dot dot-b"></span><span class="sustainability-orbit-dot dot-c"></span></div>
+      <div class="sustainability-copy" data-reveal><span class="landing-eyebrow landing-eyebrow-light">Sustainability through accountability</span><h2 id="sustainability-title">Make every handoff count.</h2><p>Build a more responsible paper loop with clear listings, coordinated collections and transaction records that keep reported quantities visible.</p><div class="sustainability-real-data"><span class="sustainability-data-icon" aria-hidden="true">↗</span><span><strong><span data-counter data-decimals="2" data-target="{{ landing_recovered_paper_kg|floatformat:'-2' }}">{{ landing_recovered_paper_kg|floatformat:"-2" }}</span> kg</strong><small>recorded in completed transactions</small></span></div><a class="landing-button landing-button-light" href="{% url 'accounts:register' %}">Build a clearer paper loop <span aria-hidden="true">↗</span></a></div>
+      <div class="sustainability-caption">Platform-reported quantity<br>from completed transfers</div>
+    </div>
+  </section>
+
+  <section class="landing-faq landing-section" id="faq" aria-labelledby="faq-title">
+    <div class="landing-wrap faq-grid">
+      <div class="faq-intro" data-reveal><span class="landing-eyebrow">Good to know</span><h2 id="faq-title">A few things people ask.</h2><p>Learn how PaperLoop supports the paper recovery process.</p><a class="text-link-arrow" href="{% url 'accounts:register' %}">Get started with PaperLoop <span aria-hidden="true">↗</span></a></div>
+      <div class="faq-list" data-reveal style="--reveal-delay: 100ms">
+        <details class="faq-item" name="paperloop-faq"><summary>Who can use PaperLoop?<span class="faq-toggle" aria-hidden="true"></span></summary><div class="faq-answer"><p>Educational institutions can list surplus paper, and recycling or collection partners can create profiles with their accepted materials and service areas. Organizations complete verification before role-specific access is granted.</p></div></details>
+        <details class="faq-item" name="paperloop-faq"><summary>How are recycler recommendations determined?<span class="faq-toggle" aria-hidden="true"></span></summary><div class="faq-answer"><p>Recommendations consider listing and partner details such as accepted paper categories, service area, location and available capacity. Partners can review the match information before a collection request is sent.</p></div></details>
+        <details class="faq-item" name="paperloop-faq"><summary>Can both organizations follow a collection?<span class="faq-toggle" aria-hidden="true"></span></summary><div class="faq-answer"><p>Yes. Collection requests move through request, acceptance, scheduling and completion stages. The related transaction record keeps the confirmed quantity connected to the collection.</p></div></details>
+        <details class="faq-item" name="paperloop-faq"><summary>Are the figures on this page estimates?<span class="faq-toggle" aria-hidden="true"></span></summary><div class="faq-answer"><p>The platform figures shown above are calculated from completed transaction records and active verified recycler profiles. They are not projections of environmental savings.</p></div></details>
+      </div>
+    </div>
+  </section>
+
+  <section class="landing-final-cta" id="contact" aria-labelledby="final-cta-title">
+    <div class="landing-wrap final-cta-inner" data-reveal>
+      <span class="landing-eyebrow landing-eyebrow-light">Keep good paper in circulation</span>
+      <h2 id="final-cta-title">Ready to close the loop?</h2>
+      <p>Join institutions and recycling partners building a more coordinated way to manage paper.</p>
+      {% if user.is_authenticated %}<a class="landing-button landing-button-light" href="{% url 'accounts:dashboard' %}">Join PaperLoop <span aria-hidden="true">↗</span></a>{% else %}<a class="landing-button landing-button-light" href="{% url 'accounts:register' %}">Join PaperLoop <span aria-hidden="true">↗</span></a>{% endif %}
+      <span class="final-cta-decoration final-cta-decoration-one" aria-hidden="true"></span><span class="final-cta-decoration final-cta-decoration-two" aria-hidden="true"></span>
+    </div>
+  </section>
+</div>
+{% endblock %}

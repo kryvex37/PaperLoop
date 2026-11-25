@@ -347,7 +347,9 @@ class TestRecyclerMatchingAndSelectionFR08(TestCase):
         # Verify matching partner details appear in the page
         self.assertContains(response, "Dhaka Paper Recyclers")
         self.assertContains(response, "✓ Accepts Office paper")
-        self.assertContains(response, "98% Match")
+        self.assertContains(response, "Eligibility-Based Recommendations")
+        self.assertContains(response, "Eligibility Score:")
+        self.assertContains(response, "Rule-based ordering")
 
     def test_institution_user_can_select_recommended_partner(self):
         """
@@ -896,8 +898,9 @@ class TemplateIntegrationTest(TestCase):
         response = self.client.get(reverse("accounts:partner_profile"))
         self.assertEqual(response.status_code, 200)
 
-        # Form card max-width 800px
-        self.assertContains(response, "max-width: 800px")
+        # Redesigned profile form surface
+        self.assertContains(response, "recycler-profile-settings")
+        self.assertContains(response, 'class="card border-0 shadow-sm"')
 
         # Fieldset 1: Operating Status
         self.assertContains(response, "Operating Status")
@@ -938,8 +941,12 @@ class TemplateIntegrationTest(TestCase):
         # Recommended partner card
         self.assertContains(response, "EcoCycle Ltd")
         self.assertContains(response, "Mark Robinson")
-        self.assertContains(response, "text-bg-success")
-        self.assertContains(response, "% Match")
+        self.assertContains(response, "badge-saas badge-neutral")
+        self.assertContains(response, "Eligibility-Based Recommendations")
+        self.assertContains(response, "Eligibility Score:")
+        self.assertContains(response, "Rule-based ordering")
+        self.assertContains(response, "New to marketplace")
+        self.assertContains(response, "No resolved pickup history; neutral fulfillment prior used")
         self.assertContains(response, "✓ Accepts Office paper")
         self.assertContains(response, "✓ Capacity (5000.00 kg/mo) covers listing")
 
@@ -948,7 +955,7 @@ class TemplateIntegrationTest(TestCase):
         self.assertContains(response, f'action="{select_url}"')
         self.assertContains(response, 'name="partner_id"')
         self.assertContains(response, 'name="notes"')
-        self.assertContains(response, "Select &amp; Request Collection")
+        self.assertContains(response, "Select &amp; Request Pickup")
 
     def test_listing_recommendations_empty_alert(self):
         # Partner with empty service area and different category
@@ -969,7 +976,7 @@ class TemplateIntegrationTest(TestCase):
         self.assertEqual(response.status_code, 200)
 
         # Helpful alert when no recommendations
-        self.assertContains(response, "No verified recycling partners currently service this category/area")
+        self.assertContains(response, "No Active Recyclers Available")
         self.assertContains(response, reverse("accounts:institution_dashboard"))
 
     def test_institution_dashboard_find_recycler_and_active_collection_badge(self):
@@ -982,7 +989,7 @@ class TemplateIntegrationTest(TestCase):
         rec_url = reverse("accounts:listing_recommendations", kwargs={"listing_id": self.listing.pk})
         self.assertContains(response, f'href="{rec_url}"')
         self.assertContains(response, "Find Recycler")
-        self.assertContains(response, "btn-sm btn-success")
+        self.assertContains(response, "btn-saas btn-primary btn-sm")
 
         # 2. Listing with active collection: shows 'Collection Requested' badge
         Collection.objects.create(
@@ -994,7 +1001,7 @@ class TemplateIntegrationTest(TestCase):
         self.listing.save()
 
         response_with_collection = self.client.get(dashboard_url)
-        self.assertContains(response_with_collection, "Collection Requested")
+        self.assertContains(response_with_collection, "Requested")
         self.assertNotContains(response_with_collection, f'href="{rec_url}"')
 
 

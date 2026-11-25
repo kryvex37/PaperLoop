@@ -1,12 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Partner Dashboard · PaperLoop{% endblock %}
+{% block topbar_title %}Recycler dashboard{% endblock %}
+{% block body_class %}recycler-body{% endblock %}
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid px-lg-4 py-4 recycler-dashboard">
+  <div class="row g-4">
+    <div class="col-12 col-lg-3 col-xl-2">
+      {% include "accounts/components/recycler_sidebar.html" with active_nav="dashboard" %}
+    </div>
+    <div class="col-12 col-lg-9 col-xl-10">
   <!-- Header -->
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div class="dashboard-topbar recycler-hero paperloop-shape-surface d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <span class="paperloop-shape-orbit paperloop-shape-orbit-large" data-gsap-motion="rotate" aria-hidden="true"></span>
+    <span class="paperloop-shape-orbit paperloop-shape-orbit-small" data-gsap-motion="orbit" aria-hidden="true"></span>
+    <span class="paperloop-shape-blob paperloop-shape-blob-small" data-gsap-motion="float" aria-hidden="true"></span>
     <div>
       <p class="text-uppercase text-success fw-bold small mb-1 tracking-wide">Recycling / Collection Partner</p>
-      <h1 class="h2 mb-1 fw-bold text-dark">{{ user.organization_name|default:"Partner Dashboard" }}</h1>
+      <h1 class="h2 mb-1 fw-bold text-dark">Welcome back, {{ user.organization_name|default:"recycling partner" }}</h1>
       <p class="text-secondary mb-0">
         {% if user.contact_name %}
           <span>Contact Person: <strong class="text-dark">{{ user.contact_name }}</strong></span>
@@ -17,16 +27,17 @@
         {% endif %}
       </p>
     </div>
-    <div>
-      <a class="btn btn-outline-secondary px-3 me-1" href="{% url 'accounts:partner_profile_detail' %}">View Profile</a>
-      <a class="btn btn-outline-success px-4" href="{% url 'accounts:partner_profile' %}">Edit Profile &amp; Capacity</a>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-success px-3" href="{% url 'accounts:transaction_history' %}">Transaction Records</a>
+      <a class="btn btn-outline-secondary px-3" href="{% url 'accounts:partner_profile_detail' %}">View Profile</a>
+      <a class="btn btn-outline-success px-3" href="{% url 'accounts:partner_profile' %}">Edit Profile &amp; Capacity</a>
     </div>
   </div>
 
   <!-- KPI Row (3 cards) -->
   <div class="row g-3 mb-4">
     <!-- Card 1: Operational Status -->
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
       <div class="card h-100 border-0 shadow-sm">
         <div class="card-body d-flex flex-column justify-content-between p-3 p-md-4">
           <div class="text-secondary small fw-medium mb-2">Operational Status</div>
@@ -49,13 +60,21 @@
     </div>
 
     <!-- Card 2: Processing Capacity -->
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
       <div class="card h-100 border-0 shadow-sm">
         <div class="card-body d-flex flex-column justify-content-between p-3 p-md-4">
           <div class="text-secondary small fw-medium mb-2">Processing Capacity</div>
           <div class="fs-4 fw-bold text-dark">
             {% if profile.maximum_capacity != None %}{{ profile.maximum_capacity }} {{ profile.capacity_unit }}{% elif profile.capacity_kg_per_month != None %}{{ profile.capacity_kg_per_month }} kg{% else %}Flexible kg{% endif %}
           </div>
+          {% if profile.maximum_capacity %}
+            <div class="recycler-capacity-meter mt-3">
+              <meter min="0" max="{{ profile.maximum_capacity }}" value="{{ profile.current_allocated_load|default:0 }}" aria-label="Allocated processing capacity">{{ profile.current_allocated_load|default:0 }} of {{ profile.maximum_capacity }}</meter>
+              <div class="d-flex justify-content-between small text-secondary mt-1"><span>{{ profile.current_allocated_load|default:0 }} allocated</span><span>{{ profile.available_capacity }} available</span></div>
+            </div>
+          {% elif profile.capacity_kg_per_month %}
+            <div class="recycler-capacity-meter mt-3"><meter min="0" max="{{ profile.capacity_kg_per_month }}" value="{{ profile.current_allocated_load|default:0 }}" aria-label="Allocated monthly processing capacity">{{ profile.current_allocated_load|default:0 }} of {{ profile.capacity_kg_per_month }}</meter><div class="small text-secondary mt-1">Current load against monthly capacity</div></div>
+          {% endif %}
           <div class="text-secondary small mt-2">
             {% if profile.maximum_capacity != None %}
               Maximum {{ profile.get_capacity_period_display }} processing capacity · {{ profile.available_capacity }} {{ profile.capacity_unit }} available
@@ -70,7 +89,7 @@
     </div>
 
     <!-- Card 3: Accepted Categories count -->
-    <div class="col-12 col-md-4">
+    <div class="col-12 col-md-6 col-xl-3">
       <div class="card h-100 border-0 shadow-sm">
         <div class="card-body d-flex flex-column justify-content-between p-3 p-md-4">
           <div class="text-secondary small fw-medium mb-2">Accepted Categories</div>
@@ -82,6 +101,13 @@
           </div>
         </div>
       </div>
+    </div>
+    <div class="col-12 col-md-6 col-xl-3">
+      <article class="card recycler-kpi-card h-100"><div class="card-body d-flex flex-column justify-content-between p-3 p-md-4">
+        <div class="text-secondary small fw-medium mb-2">Collection Requests</div>
+        <div class="recycler-kpi-number">{{ pending_requests }}</div>
+        <div class="text-secondary small mt-2">Pending of {{ total_requests }} total partner requests</div>
+      </div></article>
     </div>
   </div>
 
@@ -118,16 +144,27 @@
   </div>
 
   <!-- Incoming Collection Requests Section -->
-  <section class="card border-0 shadow-sm">
+  <section id="incoming-requests" class="card recycler-section-card border-0 shadow-sm">
     <div class="card-body p-0">
       <div class="p-3 p-md-4 border-bottom">
-        <h2 class="h5 mb-1 fw-bold">Incoming Collection Requests</h2>
+        <span id="active-collections" class="recycler-section-label">Requests &amp; active work</span>
+        <h2 class="h4 mb-1 fw-bold">Recent activity &amp; collection requests</h2>
         <p class="small text-secondary mb-0">Collection requests initiated by educational institutions based on PaperLoop recommendations.</p>
       </div>
 
       {% if incoming_collections %}
+        <div class="filter-toolbar recycler-request-filters">
+          <form data-table-filter data-table-target="#recycler-collections-table" data-count-target="#recycler-collection-count" role="search">
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-7"><label class="form-label small fw-semibold" for="partner-request-search">Search requests</label><input class="form-control" id="partner-request-search" type="search" data-filter-field="search" placeholder="Paper type, institution or city"></div>
+              <div class="col-8 col-md-3"><label class="form-label small fw-semibold" for="partner-request-status">Status</label><select class="form-select" id="partner-request-status" data-filter-field="status"><option value="">All statuses</option><option value="requested">Requested</option><option value="accepted">Accepted</option><option value="scheduled">Scheduled</option><option value="collected">Collected</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select></div>
+              <div class="col-4 col-md-2"><button class="btn-saas btn-secondary w-100" type="button" data-filter-reset>Reset</button></div>
+            </div>
+            <div id="recycler-collection-count" class="small text-secondary mt-2" aria-live="polite"></div>
+          </form>
+        </div>
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
+          <table id="recycler-collections-table" class="table table-hover align-middle mb-0">
             <thead class="table-light">
               <tr>
                 <th scope="col" class="ps-3 ps-md-4">Listing</th>
@@ -141,7 +178,7 @@
             </thead>
             <tbody>
               {% for collection in incoming_collections %}
-                <tr>
+                <tr data-filter-row data-status="{{ collection.status }}" data-search="{{ collection.listing.get_paper_type_display }} {{ collection.listing.category_details }} {{ collection.listing.institution.user.organization_name }} {{ collection.listing.pickup_city }}">
                   <td class="ps-3 ps-md-4">
                     <div class="fw-semibold text-dark">{{ collection.listing.get_paper_type_display }}</div>
                     {% if collection.listing.category_details %}
@@ -202,54 +239,41 @@
   </section>
 
   <!-- Available Marketplace Paper Listings Section -->
-  <section class="card border-0 shadow-sm mt-4">
+  <section id="available-listings" class="card recycler-section-card mt-4">
     <div class="card-body p-0">
       <div class="p-3 p-md-4 border-bottom d-flex justify-content-between align-items-center">
         <div>
-          <h2 class="h5 mb-1 fw-bold">Available Paper Listings from Institutions</h2>
-          <p class="small text-secondary mb-0">Bulk paper waste listings posted by educational institutions open for recycling partners.</p>
+          <h2 class="h4 mb-1 fw-bold">Available paper listings</h2>
+          <p class="small text-secondary mb-0">Explore paper currently offered by educational institutions.</p>
         </div>
         <span class="badge bg-light text-dark border">{{ available_listings|length }} Available</span>
       </div>
 
       {% if available_listings %}
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col" class="ps-3 ps-md-4">Paper Material</th>
-                <th scope="col">Institution</th>
-                <th scope="col">Estimated Quantity</th>
-                <th scope="col">Pickup Location</th>
-                <th scope="col">Collection Window</th>
-                <th scope="col" class="pe-3 pe-md-4">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for listing in available_listings %}
-                <tr>
-                  <td class="ps-3 ps-md-4">
-                    <div class="fw-semibold text-dark">{{ listing.get_paper_type_display }}</div>
-                    {% if listing.category_details %}
-                      <div class="small text-secondary">{{ listing.category_details }}</div>
-                    {% endif %}
-                  </td>
-                  <td class="fw-medium">
-                    {{ listing.institution.user.organization_name }}
-                  </td>
-                  <td class="text-nowrap fw-semibold text-success">{{ listing.quantity_kg }} kg</td>
-                  <td>{{ listing.pickup_city }}{% if listing.pickup_country %}, {{ listing.pickup_country }}{% endif %}</td>
-                  <td class="small text-secondary">
-                    {% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible{% endif %}
-                    {% if listing.available_until %}<br>to {{ listing.available_until|date:"M j, Y" }}{% endif %}
-                  </td>
-                  <td class="pe-3 pe-md-4">
-                    <span class="badge rounded-pill text-bg-success">Available for Pickup</span>
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <form class="filter-toolbar recycler-listing-filters" data-table-filter data-table-target="#recycler-listings-grid" data-count-target="#recycler-listing-count" role="search">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-7"><label class="form-label small fw-semibold" for="recycler-listing-search">Search listings</label><input class="form-control" id="recycler-listing-search" type="search" data-filter-field="search" placeholder="Paper, institution, city or country"></div>
+            <div class="col-8 col-md-3"><label class="form-label small fw-semibold" for="recycler-paper-filter">Paper category</label><select class="form-select" id="recycler-paper-filter" data-filter-field="category"><option value="">All categories</option><option value="office_paper">Office paper</option><option value="books_notebooks">Books and notebooks</option><option value="newspapers_magazines">Newspapers and magazines</option><option value="cardboard">Cardboard</option><option value="mixed_paper">Mixed paper</option><option value="other">Other paper</option></select></div>
+            <div class="col-4 col-md-2"><button class="btn-saas btn-secondary w-100" type="button" data-filter-reset>Reset</button></div>
+          </div>
+          <div id="recycler-listing-count" class="small text-secondary mt-2" aria-live="polite"></div>
+        </form>
+        <div id="recycler-listings-grid" class="row g-3 p-3 p-lg-4">
+          {% for listing in available_listings %}
+            <div class="col-12 col-xl-6" data-filter-row data-category="{{ listing.paper_type }}" data-search="{{ listing.get_paper_type_display }} {{ listing.category_details }} {{ listing.institution.user.organization_name }} {{ listing.pickup_city }} {{ listing.pickup_country }} {{ listing.description }}">
+              <article class="recycler-listing-card h-100">
+                <div class="recycler-listing-card-main">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div><span class="recycler-card-kicker">{{ listing.institution.user.organization_name }}</span><h3>{{ listing.get_paper_type_display }}</h3>{% if listing.category_details %}<p class="recycler-listing-detail">{{ listing.category_details }}</p>{% endif %}</div>
+                    <span class="recycler-listing-quantity">{{ listing.quantity_kg }} <small>kg</small></span>
+                  </div>
+                  <div class="recycler-listing-meta"><span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.7"/></svg>{{ listing.pickup_city|default:"Location not specified" }}{% if listing.pickup_country %}, {{ listing.pickup_country }}{% endif %}</span><span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M16 3v4M8 3v4M3 10h18" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>{% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible start{% endif %}{% if listing.available_until %} – {{ listing.available_until|date:"M j, Y" }}{% endif %}</span></div>
+                  <div class="recycler-listing-card-footer"><span class="recycler-open-dot"></span>Available for pickup<span class="recycler-card-category">{{ listing.get_paper_type_display }}</span></div>
+                  <details class="recycler-listing-details"><summary>View listing details</summary><div class="recycler-listing-description">{% if listing.description %}{{ listing.description|linebreaksbr }}{% else %}No additional listing notes provided.{% endif %}</div>{% if listing.photo %}<img class="recycler-listing-photo" src="{{ listing.photo.url }}" alt="Paper listing photograph" loading="lazy">{% endif %}</details>
+                </div>
+              </article>
+            </div>
+          {% endfor %}
         </div>
       {% else %}
         <div class="p-4 text-center text-secondary small">
@@ -258,5 +282,7 @@
       {% endif %}
     </div>
   </section>
+    </div>
+  </div>
 </div>
 {% endblock %}

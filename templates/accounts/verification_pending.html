@@ -1,15 +1,30 @@
 {% extends "base.html" %}
-{% block title %}Organization review · PaperLoop{% endblock %}
+{% load static %}
+{% block title %}Account Status · PaperLoop{% endblock %}
+{% block body_class %}signin-body{% endblock %}
 {% block content %}
-<section class="narrow-shell dashboard-card">
-  <p class="eyebrow">Organization review</p>
-  <h1>Your account is {{ verification_status|lower }}.</h1>
-  {% if verification_status == "Pending review" %}
-    <p>A PaperLoop administrator will review your organization. Role-specific features will be available after verification.</p>
-  {% elif verification_status == "Rejected" %}
-    <p>Your organization could not be verified. Contact a PaperLoop administrator for next steps.</p>
-  {% else %}
-    <p>Organization access is currently unavailable. Contact a PaperLoop administrator for help.</p>
-  {% endif %}
+<section class="signin-page auth-compact-page" aria-labelledby="approval-title">
+  {% include "accounts/components/auth_story_panel.html" with auth_kicker="Organization review" auth_heading="A thoughtful start to a better paper loop." auth_support="PaperLoop reviews organization accounts before granting access to listings and collection tools." auth_card_one="Organization" auth_card_one_note="Details submitted" auth_card_two="Administrator" auth_card_two_note="Reviewing account access" %}
+  <div class="signin-main"><div class="signin-card auth-status-card auth-centered-card">
+    {% if verification_status == "Pending review" %}
+      <div class="auth-status-icon auth-status-icon-warn" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+      <h2 id="approval-title">Review in progress</h2>
+      <span class="badge-saas badge-warning mb-3"><span class="badge-dot" style="background:#B46C00"></span>Pending administrator review</span>
+      <p class="signin-subtitle">Thank you for registering <strong>{{ user.organization_name }}</strong>. Our administrators are reviewing your organization details. Role-specific listings and collection tools will become available upon approval.</p>
+    {% elif verification_status == "Rejected" %}
+      <div class="auth-status-icon auth-status-icon-error" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6m0-6 6 6"/></svg></div>
+      <h2 id="approval-title">Review needs an update</h2><span class="badge-saas badge-neutral mb-3">Status: Unverified</span>
+      <p class="signin-subtitle">Your organization registration could not be verified. Please contact administrative support to provide updated compliance documentation.</p>
+    {% else %}
+      <div class="auth-status-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="m22 4-10 10.01-3-3"/></svg></div>
+      <h2 id="approval-title">Account status: {{ verification_status }}</h2>
+      <p class="signin-subtitle">Your organization status is currently updated. Contact the administrator if you need role changes.</p>
+    {% endif %}
+    <div class="auth-account-details"><div><span>Registered email</span><strong>{{ user.email }}</strong></div><div><span>Assigned role</span><strong>{{ user.get_role_display }}</strong></div></div>
+    <div class="auth-status-actions">
+      <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit" class="signin-secondary">Sign out</button></form>
+      <a href="mailto:support@paperloop.test" class="signin-submit">Contact support</a>
+    </div>
+  </div></div>
 </section>
 {% endblock %}
