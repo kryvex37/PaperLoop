@@ -1,15 +1,117 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Find Recycling Partners · PaperLoop{% endblock %}
+
+{% block topbar_section %}Network{% endblock %}
+{% block topbar_title %}Recycler Discovery{% endblock %}
+{% block body_class %}institution-body{% endblock %}
 {% block content %}
-<main class="container py-4" style="max-width: 1100px;">
-  <div class="mb-4"><p class="text-uppercase text-success fw-bold small mb-1">Partner directory</p><h1 class="h2 fw-bold">Find a recycling partner</h1><p class="text-secondary">Browse verified, active partners accepting collection requests. Filter by accepted paper, service area, and available capacity.</p></div>
-  <form method="get" class="card border-0 shadow-sm mb-4"><div class="card-body"><div class="row g-3 align-items-end">
-    <div class="col-12 col-md-6"><label class="form-label" for="{{ form.search.id_for_label }}">{{ form.search.label }}</label>{{ form.search }}</div>
-    <div class="col-12 col-md-6"><label class="form-label" for="{{ form.paper_type.id_for_label }}">{{ form.paper_type.label }}</label>{{ form.paper_type }}</div>
-    <div class="col-12 col-md-6"><label class="form-label" for="{{ form.service_area.id_for_label }}">{{ form.service_area.label }}</label>{{ form.service_area }}</div>
-    <div class="col-12 col-md-4"><label class="form-label" for="{{ form.quantity_kg.id_for_label }}">{{ form.quantity_kg.label }}</label>{{ form.quantity_kg }}</div>
-    <div class="col-12 col-md-2 d-grid"><button class="btn btn-success" type="submit">Filter</button></div>
-  </div>{% if form.errors %}<div class="text-danger small mt-2">Enter valid filter values.</div>{% endif %}</div></form>
-  {% if partners %}<div class="row g-3">{% for partner in partners %}<div class="col-12 col-lg-6"><article class="card h-100 border-0 shadow-sm"><div class="card-body p-4"><div class="d-flex justify-content-between gap-2"><h2 class="h5 fw-bold">{{ partner.user.organization_name }}</h2><span class="badge text-bg-success align-self-start">Verified</span></div><p class="text-secondary small mb-3">{{ partner.user.contact_name }}{% if partner.user.phone %} · {{ partner.user.phone }}{% endif %}</p><dl class="row small mb-3"><dt class="col-4">Paper</dt><dd class="col-8">{% for value, label in paper_category_choices %}{% if value in partner.accepted_paper_types %}{{ label }}{% if not forloop.last %}, {% endif %}{% endif %}{% empty %}Not specified{% endfor %}</dd><dt class="col-4">Service area</dt><dd class="col-8">{{ partner.service_area|default:"Not specified" }}</dd><dt class="col-4">Available</dt><dd class="col-8">{% if partner.available_capacity_kg == None %}Flexible{% else %}{{ partner.available_capacity_kg }} kg{% endif %}</dd></dl><a class="btn btn-outline-success btn-sm" href="{% url 'accounts:partner_public_detail' partner.pk %}">View partner</a></div></article></div>{% endfor %}</div>{% else %}<div class="alert alert-info">No active partners match these filters.</div>{% endif %}
-</main>
+<div class="container-fluid px-lg-4 py-4">
+  <div class="row g-4">
+    <!-- Sidebar -->
+    <div class="col-12 col-lg-3 col-xl-2">
+      {% include "accounts/components/institution_sidebar.html" with active_nav="partners" %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="col-12 col-lg-9 col-xl-10">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+          <span class="badge-saas">Verified Directory</span>
+          <h1 class="h2 fw-bold text-dark mt-2 mb-1">Find a Recycling Partner</h1>
+          <p class="text-secondary mb-0">Browse verified collectors accepting campus pickup requests. Filter by accepted materials and capacity.</p>
+        </div>
+      </div>
+
+      <div class="row g-4 align-items-start">
+        <aside class="col-12 col-lg-3 recycler-filter-sidebar" aria-label="Recycler filters">
+          <form method="get" class="card-saas p-3 p-lg-4">
+            <h2 class="h6 fw-bold mb-3">Filter recyclers</h2>
+          <div class="d-flex flex-column gap-3">
+          <div>
+            <label class="form-label fw-bold small text-dark" for="{{ form.search.id_for_label }}">{{ form.search.label }}</label>
+            {{ form.search }}
+          </div>
+          <div>
+            <label class="form-label fw-bold small text-dark" for="{{ form.paper_type.id_for_label }}">{{ form.paper_type.label }}</label>
+            {{ form.paper_type }}
+          </div>
+          <div>
+            <label class="form-label fw-bold small text-dark" for="{{ form.service_area.id_for_label }}">{{ form.service_area.label }}</label>
+            {{ form.service_area }}
+          </div>
+          <div>
+            <label class="form-label fw-bold small text-dark" for="{{ form.quantity_kg.id_for_label }}">{{ form.quantity_kg.label }}</label>
+            {{ form.quantity_kg }}
+          </div>
+          <div class="d-grid gap-2">
+            <button class="btn-saas btn-primary py-2" type="submit">Apply Filters</button>
+            <a class="btn-saas btn-secondary py-2" href="{% url 'accounts:partner_directory' %}">Clear Filters</a>
+          </div>
+          </div>
+        {% if form.errors %}<div class="text-danger small mt-2">Enter valid filter values.</div>{% endif %}
+      </form>
+        </aside>
+
+      <!-- Results Grid -->
+      <div class="col-12 col-lg-9">
+      <div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 fw-bold mb-0">Available recyclers</h2><span class="status-pill status-pill-neutral">{{ partners|length }} partners</span></div>
+      {% if partners %}
+        <div class="row g-4">
+          {% for partner in partners %}
+            <div class="col-12 col-lg-6">
+              <article class="card-saas recycler-discovery-card p-4 h-100 d-flex flex-column justify-content-between">
+                <div>
+                  <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <h2 class="h5 fw-bold text-dark mb-0">{{ partner.user.organization_name }}</h2>
+                    <span class="status-pill status-pill-success">Verified Partner</span>
+                  </div>
+                  <p class="text-secondary small mb-3">
+                    {{ partner.user.contact_name }}{% if partner.user.phone %} · {{ partner.user.phone }}{% endif %}
+                  </p>
+
+                  <div class="bg-light p-3 rounded-3 border mb-3">
+                    <dl class="row small mb-0">
+                      <dt class="col-4 text-muted">Accepted Grades:</dt>
+                      <dd class="col-8 text-dark fw-medium mb-2">
+                        {% for value, label in paper_category_choices %}
+                          {% if value in partner.accepted_paper_types %}
+                            <span class="badge text-bg-light border text-dark">{{ label }}</span>
+                          {% endif %}
+                        {% empty %}
+                          <span class="text-muted">Not specified</span>
+                        {% endfor %}
+                      </dd>
+                      <dt class="col-4 text-muted">Service Radius:</dt>
+                      <dd class="col-8 text-dark mb-2">{{ partner.service_area|default:"Not specified" }}</dd>
+                      <dt class="col-4 text-muted">Available Load:</dt>
+                      <dd class="col-8 text-success fw-bold mb-0">
+                        {% if partner.available_capacity_kg == None %}Flexible{% else %}{{ partner.available_capacity_kg }} kg{% endif %}
+                      </dd>
+                    </dl>
+                  </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                  <a class="btn-saas btn-secondary btn-sm" href="{% url 'accounts:partner_public_detail' partner.pk %}">View Full Profile</a>
+                </div>
+              </article>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state card-saas">
+          <div class="empty-state-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h3 class="h5 fw-bold text-dark">No Matching Partners</h3>
+          <p class="text-secondary small mb-3">Try adjusting your filters or expanding the service area criteria.</p>
+        </div>
+      {% endif %}
+      </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 {% endblock %}

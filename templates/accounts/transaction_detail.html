@@ -1,8 +1,19 @@
 {% extends "base.html" %}
 {% block title %}Transaction #{{ transaction.reference|default:transaction.pk }} · PaperLoop{% endblock %}
 
+{% block topbar_title %}Digital record details{% endblock %}
+{% block topbar_section %}Records{% endblock %}
+{% block body_class %}{% if user.role == 'institution' %}institution-body{% elif user.role == 'partner' %}recycler-body{% endif %}{% endblock %}
 {% block content %}
-<div class="container py-4 py-lg-5">
+<div class="container-fluid px-lg-4 py-4"><div class="row g-4">
+  <div class="col-12 col-lg-3 col-xl-2">
+    {% if is_owner_institution %}
+      {% include "accounts/components/institution_sidebar.html" with active_nav="transactions" %}
+    {% else %}
+      {% include "accounts/components/recycler_sidebar.html" with active_nav="transactions" %}
+    {% endif %}
+  </div>
+  <div class="col-12 col-lg-9 col-xl-10">
   <!-- Breadcrumb -->
   <nav aria-label="breadcrumb" class="mb-3">
     <ol class="breadcrumb">
@@ -127,6 +138,8 @@
         </div>
       </div>
     </div>
+  </div>
+</div>
   </div>
 </div>
 {% endblock %}

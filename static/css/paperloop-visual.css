@@ -1,0 +1,246 @@
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin-400.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin-500.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin-600.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin-700.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin-800.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "DM Sans";
+  src: url("../fonts/dm-sans-latin-400.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("../fonts/dm-sans-latin-500.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("../fonts/dm-sans-latin-600.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "DM Sans";
+  src: url("../fonts/dm-sans-latin-700.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../fonts/space-grotesk-latin-400.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../fonts/space-grotesk-latin-500.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../fonts/space-grotesk-latin-600.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("../fonts/space-grotesk-latin-700.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+:root {
+  --paperloop-font-body: "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --paperloop-font-heading: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --paperloop-font-editorial: "Space Grotesk", "Manrope", sans-serif;
+  --paperloop-type-display: clamp(3.25rem, 7.5vw, 7.4rem);
+  --paperloop-type-page-title: clamp(2.2rem, 4.4vw, 4.35rem);
+  --paperloop-type-section-title: clamp(1.8rem, 3.2vw, 3.25rem);
+  --paperloop-leading-display: .94;
+  --paperloop-leading-heading: 1.08;
+  --paperloop-tracking-display: -.075em;
+  --paperloop-tracking-heading: -.055em;
+  --font-sans: var(--paperloop-font-body);
+  --font-display: var(--paperloop-font-heading);
+  --paperloop-shape-green: #176B3A;
+  --paperloop-shape-soft: #EAF4ED;
+}
+
+html { font-synthesis: none; text-rendering: optimizeLegibility; }
+body, button, input, select, textarea { font-family: var(--paperloop-font-body); }
+:where(h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6) {
+  font-family: var(--paperloop-font-heading);
+  font-kerning: normal;
+  font-weight: 700;
+  letter-spacing: var(--paperloop-tracking-heading);
+  line-height: var(--paperloop-leading-heading);
+}
+:where(p, li, dd, dt, label, .form-text) { text-wrap: pretty; }
+:where(.eyebrow, .landing-eyebrow, .about-eyebrow, .paperloop-admin-eyebrow, .stat-label, .ui-label) {
+  font-family: var(--paperloop-font-body);
+  font-weight: 700;
+  letter-spacing: .105em;
+}
+:where(.metric-number, .stat-value, .recycler-kpi-number, .impact-summary-value) { font-variant-numeric: tabular-nums lining-nums; }
+
+.landing-page .landing-hero h1,
+.about-page .about-hero h1,
+.signin-story h1,
+.register-body .auth-intro h1,
+.paperloop-admin-hero h1,
+.dashboard-hero h1,
+.recycler-hero h1 {
+  font-family: var(--paperloop-font-editorial);
+  font-size: var(--paperloop-type-display);
+  font-weight: 600;
+  letter-spacing: var(--paperloop-tracking-display);
+  line-height: var(--paperloop-leading-display);
+  text-wrap: balance;
+}
+.dashboard-hero h1, .recycler-hero h1 { font-size: var(--paperloop-type-page-title); }
+.paperloop-admin-hero h1 { font-weight: 600 !important; }
+.about-page .about-section-heading h2,
+.landing-page .landing-section h2,
+.paperloop-admin-section-heading h2 {
+  font-family: var(--paperloop-font-heading);
+  font-size: var(--paperloop-type-section-title);
+  letter-spacing: var(--paperloop-tracking-heading);
+  line-height: 1.02;
+  text-wrap: balance;
+}
+.institution-body h1, .recycler-body h1 { font-family: var(--paperloop-font-heading); }
+.type-display { font-family: var(--paperloop-font-editorial); font-size: var(--paperloop-type-display); letter-spacing: var(--paperloop-tracking-display); line-height: var(--paperloop-leading-display); }
+.type-heading { font-family: var(--paperloop-font-heading); font-size: var(--paperloop-type-section-title); letter-spacing: var(--paperloop-tracking-heading); line-height: 1.04; }
+.type-label { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+
+.paperloop-shape-surface { position: relative; isolation: isolate; }
+.paperloop-shape-surface::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: url("../img/paperloop-shape-field.svg") no-repeat right 4% center / min(63%, 760px) auto;
+  opacity: .23;
+  pointer-events: none;
+}
+.paperloop-shape-surface-dark::after { opacity: .1; mix-blend-mode: screen; }
+.paperloop-shape-orbit {
+  position: absolute;
+  display: block;
+  aspect-ratio: 1;
+  border: 1px solid rgb(23 107 58 / .16);
+  border-radius: 50%;
+  box-shadow: 0 0 0 12px rgb(23 107 58 / .035), 0 0 0 30px rgb(23 107 58 / .022);
+  pointer-events: none;
+}
+.paperloop-shape-orbit-large { top: -78px; right: 3%; width: clamp(210px, 32vw, 410px); }
+.paperloop-shape-orbit-small { top: 24px; right: 18%; width: clamp(84px, 12vw, 150px); border-style: dashed; opacity: .6; }
+.paperloop-shape-blob {
+  position: absolute;
+  display: block;
+  width: clamp(74px, 10vw, 132px);
+  aspect-ratio: 1;
+  border-radius: 44% 56% 62% 38% / 42% 42% 58% 58%;
+  background: radial-gradient(circle at 34% 31%, rgb(188 222 194 / .54), rgb(35 139 80 / .07) 67%, transparent 72%);
+  pointer-events: none;
+}
+.paperloop-shape-blob-small { right: 8%; bottom: 22px; }
+.paperloop-shape-divider {
+  display: block;
+  height: clamp(28px, 5vw, 72px);
+  margin-top: -1px;
+  background: var(--paperloop-white, #fff);
+  clip-path: ellipse(76% 100% at 50% 100%);
+}
+.pl-icon { display: inline-block; width: 1.15em; height: 1.15em; flex: 0 0 auto; overflow: visible; vertical-align: -.16em; stroke-width: 2; }
+.sidebar-link .pl-icon { width: 16px; height: 16px; vertical-align: middle; }
+.paperloop-admin-quicknav .pl-icon { width: 16px; height: 16px; }
+
+.landing-page .landing-hero.paperloop-shape-surface::after,
+.about-page .about-hero.paperloop-shape-surface::after { opacity: .19; }
+.paperloop-admin-hero.paperloop-shape-surface::after { opacity: .12; mix-blend-mode: screen; }
+.dashboard-hero.paperloop-shape-surface::after,
+.recycler-hero.paperloop-shape-surface::after { opacity: .16; }
+.signin-body .signin-story {
+  background-image: url("../img/paperloop-shape-field.svg"), radial-gradient(ellipse at 70% 58%, rgba(51, 150, 104, .36), transparent 38%), linear-gradient(145deg, #123e30 0%, #0d3026 62%, #09271f 100%);
+  background-repeat: no-repeat;
+  background-position: right 1% center, center, center;
+  background-size: min(60vw, 650px) auto, auto, auto;
+  background-blend-mode: screen, normal, normal;
+}
+.register-body .auth-intro {
+  background-image: url("../img/paperloop-shape-field.svg"), radial-gradient(ellipse at 82% 75%, rgba(82, 167, 113, .38), transparent 42%), linear-gradient(145deg, #164d38 0%, #103b2d 58%, #0b3024 100%);
+  background-repeat: no-repeat;
+  background-position: right 2% center, center, center;
+  background-size: min(54vw, 620px) auto, auto, auto;
+  background-blend-mode: screen, normal, normal;
+}
+.landing-page .landing-hero.paperloop-shape-surface,
+.about-page .about-hero.paperloop-shape-surface,
+.dashboard-hero.paperloop-shape-surface,
+.recycler-hero.paperloop-shape-surface,
+.paperloop-admin-hero.paperloop-shape-surface { overflow: hidden; }
+.dashboard-hero.paperloop-shape-surface > .paperloop-shape-orbit,
+.dashboard-hero.paperloop-shape-surface > .paperloop-shape-blob,
+.recycler-hero.paperloop-shape-surface > .paperloop-shape-orbit,
+.recycler-hero.paperloop-shape-surface > .paperloop-shape-blob { z-index: -1; }
+.dashboard-hero.paperloop-shape-surface > .row,
+.recycler-hero.paperloop-shape-surface > div { position: relative; z-index: 1; }
+
+@media (max-width: 760px) {
+  :root {
+    --paperloop-type-display: clamp(2.7rem, 12vw, 4.4rem);
+    --paperloop-type-page-title: clamp(2rem, 8vw, 3.15rem);
+    --paperloop-type-section-title: clamp(1.65rem, 7vw, 2.45rem);
+  }
+  .paperloop-shape-surface::after { background-position: right -16% center; background-size: 100% auto; opacity: .12; }
+  .paperloop-shape-orbit-large { right: -18%; }
+  .paperloop-shape-orbit-small { right: 8%; }
+  .signin-body .signin-story, .register-body .auth-intro { background-position: right -30% center, center, center; background-size: 95% auto, auto, auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .paperloop-shape-orbit, .paperloop-shape-blob { scroll-behavior: auto; }
+}

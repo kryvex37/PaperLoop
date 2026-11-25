@@ -23,6 +23,37 @@ urlpatterns = [
         auth_views.LogoutView.as_view(),
         name="logout",
     ),
+    path(
+        "password-reset/",
+        auth_views.PasswordResetView.as_view(
+            template_name="accounts/password_reset_form.html",
+            email_template_name="accounts/password_reset_email.html",
+            success_url="/accounts/password-reset/done/",
+        ),
+        name="password_reset",
+    ),
+    path(
+        "password-reset/done/",
+        auth_views.PasswordResetDoneView.as_view(
+            template_name="accounts/password_reset_done.html",
+        ),
+        name="password_reset_done",
+    ),
+    path(
+        "reset/<uidb64>/<token>/",
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name="accounts/password_reset_confirm.html",
+            success_url="/accounts/reset/done/",
+        ),
+        name="password_reset_confirm",
+    ),
+    path(
+        "reset/done/",
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name="accounts/password_reset_complete.html",
+        ),
+        name="password_reset_complete",
+    ),
     path("institution/", views.institution_dashboard, name="institution_dashboard"),
     path("institution/profile/", views.edit_institution_profile, name="institution_profile"),
     path("ai/bulk-aggregation/", views.bulk_aggregation_dashboard, name="bulk_aggregation"),
@@ -47,4 +78,6 @@ urlpatterns = [
     path("transactions/", views.transaction_history, name="transaction_history"),
     path("transactions/<int:transaction_id>/", views.transaction_detail, name="transaction_detail"),
     path("transactions/<int:transaction_id>/record/", views.digital_record_view, name="digital_record"),
+    path("about/", views.about_view, name="about"),
+    path("landing/", views.landing_view, name="landing"),
 ]

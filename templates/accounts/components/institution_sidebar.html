@@ -1,0 +1,45 @@
+{% load static %}
+<aside class="institution-sidebar mb-4 mb-lg-0" aria-label="Institution workspace navigation">
+  <div class="saas-sidebar institution-sidebar-panel">
+    <a class="institution-sidebar-brand" href="{% url 'accounts:institution_dashboard' %}" aria-label="PaperLoop institution dashboard">
+      <img class="brand-logo-image" src="{% static 'img/paperloop-logo.webp' %}" alt="" width="40" height="40">
+      <span class="logo-text">PaperLoop</span>
+    </a>
+    <div class="sidebar-title">Workspace</div>
+    <a href="{% url 'accounts:institution_dashboard' %}" class="sidebar-link {% if active_nav == 'dashboard' %}active{% endif %}" {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-layout-dashboard"></use></svg><span>Dashboard</span>
+    </a>
+    <a href="{% url 'accounts:institution_dashboard' %}#my-listings" class="sidebar-link {% if active_nav == 'listings' %}active{% endif %}" {% if active_nav == 'listings' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-list"></use></svg><span>Paper Listings</span>
+    </a>
+    <a href="{% url 'accounts:listing_create' %}" class="sidebar-link {% if active_nav == 'create_listing' %}active{% endif %}" {% if active_nav == 'create_listing' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-plus"></use></svg><span>Create a Listing</span>
+    </a>
+    <a href="{% url 'accounts:partner_directory' %}" class="sidebar-link {% if active_nav == 'partners' %}active{% endif %}" {% if active_nav == 'partners' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-search"></use></svg><span>Recycler Discovery</span>
+    </a>
+    <a href="{% url 'accounts:institution_dashboard' %}#my-listings" class="sidebar-link {% if active_nav == 'recommendations' %}active{% endif %}" {% if active_nav == 'recommendations' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-sparkles"></use></svg><span>AI Recommendations</span>
+    </a>
+    <a href="{% url 'accounts:bulk_aggregation' %}" class="sidebar-link {% if active_nav == 'bulk' %}active{% endif %}" {% if active_nav == 'bulk' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-boxes"></use></svg><span>Bulk Pickup Planning</span>
+    </a>
+    <a href="{% url 'accounts:institution_dashboard' %}#collection-requests" class="sidebar-link {% if active_nav == 'collections' %}active{% endif %}" {% if active_nav == 'collections' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-clipboard-list"></use></svg><span>Collection Requests</span>
+    </a>
+    <a href="{% url 'accounts:institution_dashboard' %}#collection-requests" class="sidebar-link {% if active_nav == 'tracking' %}active{% endif %}" {% if active_nav == 'tracking' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-clock-3"></use></svg><span>Collection Tracking</span>
+    </a>
+    <a href="{% url 'accounts:transaction_history' %}" class="sidebar-link {% if active_nav == 'transactions' %}active{% endif %}" {% if active_nav == 'transactions' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-receipt-text"></use></svg><span>Transactions</span>
+    </a>
+    <a href="{% url 'accounts:transaction_history' %}#impact-reports" class="sidebar-link {% if active_nav == 'impact' %}active{% endif %}" {% if active_nav == 'impact' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-leaf"></use></svg><span>Impact Reports</span>
+    </a>
+    <div class="sidebar-title sidebar-title-account">Account</div>
+    <a href="{% url 'accounts:institution_profile' %}" class="sidebar-link {% if active_nav == 'profile' %}active{% endif %}" {% if active_nav == 'profile' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-settings"></use></svg><span>Settings</span>
+    </a>
+    <div class="sidebar-workspace-note"><span class="sidebar-note-dot"></span><span>Institution workspace</span></div>
+  </div>
+</aside>

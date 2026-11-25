@@ -137,7 +137,7 @@ class TransactionsFR11FR12Tests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "TXN-20261122-00001")
         self.assertContains(response, "1000.00")
-        self.assertContains(response, "Cumulative Environmental Impact")
+        self.assertContains(response, "Cumulative Environmental Outcomes")
 
     def test_partner_can_view_transaction_history(self):
         """FR-11: Partner can view their transaction history."""

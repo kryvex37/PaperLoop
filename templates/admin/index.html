@@ -2,57 +2,83 @@
 {% load i18n %}
 
 {% block title %}{{ title }} | {{ site_title|default:_('PaperLoop Administration') }}{% endblock %}
-
-{% block extrastyle %}
-  {{ block.super }}
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.9/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-yEPZ7jP9S0QKiUQ0m3jjsO4ProIW7wvR9gXkI7JOGa2XVsw53Yke2bsdkBbjmmiX" crossorigin="anonymous">
-  <style>
-    #content-main { width: 100%; }
-    .paperloop-admin-card { min-height: 100%; }
-    .paperloop-admin-card .list-group-item { overflow-wrap: anywhere; }
-    .paperloop-admin-card .list-group-item:hover { background: #f0fdf4; }
-  </style>
-{% endblock %}
-
 {% block breadcrumbs %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid px-0 py-3">
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-2 mb-4">
-    <div>
-      <p class="text-uppercase text-success fw-bold small mb-1">PaperLoop operations</p>
-      <h1 class="h2 mb-1">Marketplace administration</h1>
-      <p class="text-body-secondary mb-0">Review organizations and manage listings, collections, and recycling records.</p>
+<div class="paperloop-admin-dashboard">
+  <header class="paperloop-admin-hero paperloop-shape-surface paperloop-shape-surface-dark">
+    <div class="paperloop-admin-hero-copy">
+      <span class="paperloop-admin-eyebrow"><i></i> PaperLoop operations</span>
+      <h1>Good work starts with a clear view.</h1>
+      <p>Review organization accounts, support the recycling network, and follow collection records from one workspace.</p>
     </div>
+    <div class="paperloop-admin-hero-actions">
+      <a class="paperloop-admin-button paperloop-admin-button-light" href="{% url 'admin:accounts_user_changelist' %}?verification_status__exact=pending">Open verification queue <span aria-hidden="true">↗</span></a>
+      <a class="paperloop-admin-button paperloop-admin-button-outline" href="{% url 'admin:accounts_user_changelist' %}">Manage organizations</a>
+    </div>
+    <div class="paperloop-admin-hero-orbit" data-gsap-motion="rotate" aria-hidden="true"><span></span><span></span><span></span></div>
+  </header>
+
+  <section class="paperloop-admin-section" aria-labelledby="admin-overview-title">
+    <div class="paperloop-admin-section-heading">
+      <div><span class="paperloop-admin-eyebrow">Workspace shortcuts</span><h2 id="admin-overview-title">Platform overview</h2></div>
+      <p>Open the live registers and review queues. Totals and statuses are shown in their source records.</p>
+    </div>
+    <div class="paperloop-admin-overview-grid">
+      <a class="paperloop-admin-overview-card overview-verification" href="{% url 'admin:accounts_user_changelist' %}?verification_status__exact=pending">
+        <span class="overview-card-index">01 / REVIEW</span><span class="overview-card-icon" aria-hidden="true">◷</span>
+        <h3>Verification queue</h3><p>Review pending institution and recycler accounts with the audited admin actions.</p><span class="overview-card-link">Review organizations <b aria-hidden="true">↗</b></span>
+      </a>
+      <a class="paperloop-admin-overview-card" href="{% url 'admin:accounts_educationalinstitution_changelist' %}">
+        <span class="overview-card-index">02 / INSTITUTIONS</span><span class="overview-card-icon" aria-hidden="true">▦</span>
+        <h3>Institution directory</h3><p>Search campus records and open organization details.</p><span class="overview-card-link">Browse institutions <b aria-hidden="true">↗</b></span>
+      </a>
+      <a class="paperloop-admin-overview-card" href="{% url 'admin:accounts_recyclingprofile_changelist' %}">
+        <span class="overview-card-index">03 / RECYCLERS</span><span class="overview-card-icon" aria-hidden="true">♻</span>
+        <h3>Recycler network</h3><p>Review partner profiles, coverage, and collection availability.</p><span class="overview-card-link">Browse partners <b aria-hidden="true">↗</b></span>
+      </a>
+      <a class="paperloop-admin-overview-card" href="{% url 'admin:accounts_user_changelist' %}">
+        <span class="overview-card-index">04 / ACCOUNTS</span><span class="overview-card-icon" aria-hidden="true">♙</span>
+        <h3>Recent registrations</h3><p>Open the newest organization accounts in the user register.</p><span class="overview-card-link">View registrations <b aria-hidden="true">↗</b></span>
+      </a>
+    </div>
+  </section>
+
+  <div class="paperloop-admin-lower-grid">
+    <section class="paperloop-admin-activity" aria-labelledby="admin-activity-title">
+      <div class="paperloop-admin-section-heading compact"><div><span class="paperloop-admin-eyebrow">Activity flow</span><h2 id="admin-activity-title">A connected paper loop</h2></div></div>
+      <div class="paperloop-admin-flow" aria-label="Platform workflow: registration, verification, collection, and transaction records">
+        <div><span>01</span><b>Register</b><small>Organizations submit account details</small></div><i aria-hidden="true"></i>
+        <div><span>02</span><b>Verify</b><small>Admins review organization accounts</small></div><i aria-hidden="true"></i>
+        <div><span>03</span><b>Collect</b><small>Partners coordinate approved pickups</small></div><i aria-hidden="true"></i>
+        <div><span>04</span><b>Record</b><small>Completed collections create records</small></div>
+      </div>
+    </section>
+
+    <a class="paperloop-admin-transaction-card" href="{% url 'admin:accounts_transaction_changelist' %}">
+      <span class="paperloop-admin-eyebrow">Transaction overview</span><span class="transaction-card-icon" aria-hidden="true">↗</span>
+      <h2>Completed collection records</h2><p>Open transaction records to review completed weights, references, and completion dates.</p><span class="overview-card-link">View transactions <b aria-hidden="true">↗</b></span>
+    </a>
   </div>
 
   {% if app_list %}
-    <div class="row g-3">
-      {% for app in app_list %}
-        <div class="col-12 col-md-6 col-xxl-4">
-          <section class="card shadow-sm paperloop-admin-card" aria-labelledby="admin-app-{{ forloop.counter }}">
-            <div class="card-header bg-success-subtle border-bottom-0 py-3">
-              <h2 class="h5 mb-0" id="admin-app-{{ forloop.counter }}">{{ app.name }}</h2>
-            </div>
-            <div class="list-group list-group-flush">
+    <section id="admin-platform-overview" class="paperloop-admin-registers" aria-labelledby="admin-registers-title">
+      <div class="paperloop-admin-section-heading"><div><span class="paperloop-admin-eyebrow">Administration</span><h2 id="admin-registers-title">All platform registers</h2></div><p>Search and filter the records available to your admin account.</p></div>
+      <div class="paperloop-admin-register-grid">
+        {% for app in app_list %}
+          <section class="paperloop-admin-register-card" aria-labelledby="admin-app-{{ forloop.counter }}">
+            <h3 id="admin-app-{{ forloop.counter }}">{{ app.name }}</h3>
+            <div class="paperloop-admin-register-links">
               {% for model in app.models %}
-                {% if model.admin_url %}
-                  <div class="list-group-item d-flex justify-content-between align-items-center gap-2 py-3">
-                    <a class="fw-semibold text-decoration-none" href="{{ model.admin_url }}">{{ model.name }}</a>
-                    <span class="d-flex gap-2 flex-shrink-0">
-                      {% if model.add_url %}<a class="btn btn-sm btn-outline-success" href="{{ model.add_url }}">Add</a>{% endif %}
-                      {% if model.view_only %}<span class="badge text-bg-light border">View</span>{% endif %}
-                    </span>
-                  </div>
-                {% endif %}
+                {% if model.admin_url %}<a href="{{ model.admin_url }}">{{ model.name }}<span aria-hidden="true">↗</span></a>{% endif %}
               {% endfor %}
             </div>
           </section>
-        </div>
-      {% endfor %}
-    </div>
+        {% endfor %}
+      </div>
+    </section>
   {% else %}
-    <div class="alert alert-info" role="status">You do not have permission to manage any PaperLoop records.</div>
+    <div class="paperloop-admin-empty" role="status">Your admin account does not have permission to manage platform records.</div>
   {% endif %}
 </div>
 {% endblock %}

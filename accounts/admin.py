@@ -25,10 +25,11 @@ admin.site.index_title = "Marketplace Overview & Verification Operations"
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     add_form = AdminUserCreationForm
-    ordering = ("email",)
-    list_display = ("email", "organization_name", "role", "verification_status", "is_active", "is_staff")
+    list_display = ("email", "organization_name", "role", "verification_status", "is_active", "date_joined", "is_staff")
     list_filter = ("role", "verification_status", "is_active", "is_staff")
     search_fields = ("email", "organization_name", "contact_name")
+    ordering = ("-date_joined",)
+    list_per_page = 25
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Organization", {"fields": ("role", "organization_name", "contact_name", "phone")}),

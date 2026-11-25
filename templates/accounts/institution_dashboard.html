@@ -1,180 +1,285 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Institution Dashboard · PaperLoop{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'css/institution-dashboard.css' %}?v=1">{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/institution-dashboard.css' %}?v=2">{% endblock %}
+
+{% block topbar_title %}Dashboard{% endblock %}
+{% block body_class %}institution-body{% endblock %}
 {% block content %}
-<div class="container institution-dashboard py-4 py-lg-5">
-  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
-    <div>
-      <p class="dashboard-eyebrow">Institution workspace</p>
-      <h1 class="h2 mb-1">{{ user.organization_name }}</h1>
-      <p class="dashboard-welcome-subtitle">Turn surplus paper into a smoother, more sustainable collection process.</p>
+<div class="container-fluid px-lg-4 py-4 institution-dashboard">
+  <div class="row g-4">
+    <!-- Sidebar Column -->
+    <div class="col-12 col-lg-3 col-xl-2">
+      {% include "accounts/components/institution_sidebar.html" with active_nav="dashboard" %}
     </div>
-    <div class="d-flex flex-wrap gap-2 dashboard-actions">
-      <a class="btn btn-outline-success" href="{% url 'accounts:transaction_history' %}">Recycling Records &amp; Impact</a>
-      <a class="btn btn-outline-success" href="{% url 'accounts:institution_profile' %}">Institution profile</a>
-      <a class="btn btn-outline-success" href="{% url 'accounts:bulk_aggregation' %}">Bulk pickup opportunities</a>
-      <a class="btn btn-outline-success" href="{% url 'accounts:partner_directory' %}">Browse partners</a>
-      <a class="btn btn-success" href="{% url 'accounts:listing_create' %}">＋ Create paper listing</a>
-    </div>
-  </div>
 
-  <div class="row g-3 mb-4 dashboard-metrics">
-    <div class="col-12 col-sm-4"><div class="card h-100 dashboard-metric-card"><div class="card-body"><div class="small text-secondary">All listings</div><div class="display-6 fw-semibold">{{ listing_count }}</div></div></div></div>
-    <div class="col-12 col-sm-4"><div class="card h-100 border-0 shadow-sm"><div class="card-body"><div class="small text-secondary">Available to partners</div><div class="display-6 fw-semibold text-success">{{ available_count }}</div></div></div></div>
-    <div class="col-12 col-sm-4"><div class="card h-100 border-0 shadow-sm"><div class="card-body"><div class="small text-secondary">Drafts</div><div class="display-6 fw-semibold">{{ draft_count }}</div></div></div></div>
-  </div>
-
-  <section class="card border-0 shadow-sm mb-4" aria-labelledby="forecast-heading">
-    <div class="card-body p-3 p-md-4">
-      <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
-        <div><h2 id="forecast-heading" class="h5 mb-1">Upcoming paper volume</h2><p class="small text-secondary mb-0">Weekly estimates based on recorded pickup history.</p></div>
-        <span class="badge text-bg-light border">{{ forecast_summary.source|default:"History needed" }}</span>
+    <!-- Main Content Column -->
+    <div class="col-12 col-lg-9 col-xl-10">
+      <!-- Topbar / Welcome Banner -->
+      <div class="dashboard-hero card-saas p-4 p-lg-5 mb-4 position-relative overflow-hidden paperloop-shape-surface">
+        <span class="paperloop-shape-orbit paperloop-shape-orbit-large" data-gsap-motion="rotate" aria-hidden="true"></span>
+        <span class="paperloop-shape-orbit paperloop-shape-orbit-small" data-gsap-motion="orbit" aria-hidden="true"></span>
+        <span class="paperloop-shape-blob paperloop-shape-blob-small" data-gsap-motion="float" aria-hidden="true"></span>
+        <div class="row align-items-center">
+          <div class="col-12 col-md-8">
+            <span class="badge-saas">
+              <span class="badge-dot"></span>
+              <span>Institution Workspace</span>
+            </span>
+            <h1 class="h2 fw-bold text-dark mt-2 mb-1">{{ user.organization_name }}</h1>
+            <p class="text-secondary mb-0">Turn surplus campus paper into a predictable, auditable circular supply chain.</p>
+          </div>
+          <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
+            <a class="btn-saas btn-primary" href="{% url 'accounts:listing_create' %}">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              <span>Create Paper Listing</span>
+            </a>
+          </div>
+        </div>
       </div>
-      {% if forecast_summary.available %}
+
+      <!-- Quick Action Pills -->
+      <div class="d-flex flex-wrap gap-2 mb-4">
+        <a class="btn-saas btn-secondary py-2" href="{% url 'accounts:transaction_history' %}">Recycling Records &amp; Impact</a>
+        <a class="btn-saas btn-secondary py-2" href="{% url 'accounts:institution_profile' %}">Institution Profile</a>
+        <a class="btn-saas btn-secondary py-2" href="{% url 'accounts:bulk_aggregation' %}">Bulk Pickup Opportunities</a>
+        <a class="btn-saas btn-secondary py-2" href="{% url 'accounts:partner_directory' %}">Browse Partners</a>
+      </div>
+
+      <!-- UI-07: Statistic Cards -->
+      <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-4">
+          <div class="stat-card">
+            <div class="stat-label">All Listings</div>
+            <div class="stat-value">{{ listing_count }}</div>
+            <div class="stat-subtext">Total generated batches</div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-4">
+          <div class="stat-card" style="border-left: 4px solid var(--color-primary);">
+            <div class="stat-label">Available to Partners</div>
+            <div class="stat-value text-success">{{ available_count }}</div>
+            <div class="stat-subtext">Awaiting collection match</div>
+          </div>
+        </div>
+        <div class="col-12 col-sm-4">
+          <div class="stat-card">
+            <div class="stat-label">Drafts</div>
+            <div class="stat-value">{{ draft_count }}</div>
+            <div class="stat-subtext">Unpublished entries</div>
+          </div>
+        </div>
+      </div>
+
+<!-- Sustainability summary: aggregates only completed collection weights already present on the page. -->
+      <section class="row g-3 mb-4" aria-label="Sustainability summary">
+        <div class="col-12 col-md-6">
+          <article class="stat-card h-100">
+            <div class="stat-label">Completed Collections</div>
+            <div class="stat-value text-success impact-summary-value" data-sustainability-count>0</div>
+            <div class="stat-subtext">Completed recycling pickups recorded in your listings</div>
+          </article>
+        </div>
+        <div class="col-12 col-md-6">
+          <article class="stat-card h-100">
+            <div class="stat-label">Paper Recycled</div>
+            <div class="stat-value text-success impact-summary-value"><span data-sustainability-weight>0</span> <span class="fs-6">kg</span></div>
+            <div class="stat-subtext">Final collected weights from completed pickups</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="card-saas p-4 mb-4" aria-labelledby="recent-activity-heading">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+          <div><h2 id="recent-activity-heading" class="h5 fw-bold mb-1">Recent Campus Activity</h2><p class="small text-secondary mb-0">Your five most recently created paper listings.</p></div>
+          <a class="btn-saas btn-secondary btn-sm" href="#my-listings">View all listings</a>
+        </div>
         <div class="row g-2">
-          {% for week in forecast_summary.weeks %}
-            <div class="col-12 col-sm-6 col-lg-3"><div class="rounded border p-3 h-100">
-              <div class="small text-secondary">Week of {{ week.week_start|date:"M j" }}</div>
-              <div class="h5 my-1">{{ week.predicted_kg|floatformat:0 }} kg</div>
-              <div class="small text-secondary">90% range: {{ week.lower_90_kg|floatformat:0 }}–{{ week.upper_90_kg|floatformat:0 }} kg</div>
-              {% if week.exam_spike_alert %}<span class="badge text-bg-warning mt-2">Exam season spike</span>{% elif week.is_exam_period %}<span class="badge text-bg-light border mt-2">Exam period</span>{% endif %}
-            </div></div>
+          {% for item in listings %}
+            {% if forloop.counter <= 5 %}
+              <div class="col-12 col-md-6 col-xl-4"><div class="p-3 rounded-3 border bg-white h-100 d-flex justify-content-between align-items-start gap-3">
+                <div><div class="fw-semibold">{{ item.get_paper_type_display }} · {{ item.quantity_kg }} kg</div><div class="small text-secondary">{{ item.created_at|date:"M j, Y" }} · {{ item.pickup_city|default:"Location pending" }}</div></div>
+                <span class="status-pill {% if item.status == 'available' %}status-pill-success{% elif item.status == 'reserved' %}status-pill-info{% else %}status-pill-neutral{% endif %}">{{ item.get_status_display }}</span>
+              </div></div>
+            {% endif %}
+          {% empty %}
+            <div class="col-12"><p class="text-secondary mb-0">Create a paper listing to start your campus activity history.</p></div>
           {% endfor %}
         </div>
-        <p class="small text-secondary mt-3 mb-0">{{ forecast_summary.message }} Forecasts support planning and do not reserve collection capacity.</p>
-      {% else %}
-        <p class="text-secondary mb-2">{{ forecast_summary.message }}</p>
-        <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:institution_profile' %}">Complete institution profile</a>
-      {% endif %}
-    </div>
-  </section>
+      </section>
 
-  <section class="card border-0 shadow-sm">
-    <div class="card-body p-0">
-      <div class="d-flex justify-content-between align-items-center p-3 p-md-4 border-bottom">
-        <div><h2 class="h5 mb-1">Your paper listings</h2><p class="small text-secondary mb-0">Partners see only listings that are available.</p></div>
-      </div>
-      {% if listings %}
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th scope="col" class="ps-3 ps-md-4">Paper</th>
-                <th scope="col">Estimated amount</th>
-                <th scope="col">Pickup location</th>
-                <th scope="col">Collection period</th>
-                <th scope="col">Status</th>
-                <th scope="col" class="text-end pe-3 pe-md-4">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for listing in listings %}
+      <!-- Volume Forecast Card -->
+      <section class="card-saas p-4 mb-4" aria-labelledby="forecast-heading">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-3">
+          <div>
+            <span class="badge-saas">Predictive Intelligence</span>
+            <h2 id="forecast-heading" class="h5 fw-bold text-dark mb-1">Upcoming Paper Volume Forecast</h2>
+            <p class="small text-secondary mb-0">Weekly volume projections calibrated to your historical pickup patterns.</p>
+          </div>
+          <span class="status-pill status-pill-neutral">{{ forecast_summary.source|default:"History needed" }}</span>
+        </div>
+        {% if forecast_summary.available %}
+          <div class="row g-3">
+            {% for week in forecast_summary.weeks %}
+              <div class="col-12 col-sm-6 col-lg-3">
+                <div class="p-3 bg-light rounded-3 border h-100">
+                  <div class="small text-secondary">Week of {{ week.week_start|date:"M j" }}</div>
+                  <div class="h5 my-1 fw-bold text-dark">{{ week.predicted_kg|floatformat:0 }} kg</div>
+                  <div class="small text-secondary">90% range: {{ week.lower_90_kg|floatformat:0 }}–{{ week.upper_90_kg|floatformat:0 }} kg</div>
+                  {% if week.exam_spike_alert %}<span class="status-pill status-pill-warning mt-2">Exam season spike</span>{% elif week.is_exam_period %}<span class="status-pill status-pill-neutral mt-2">Exam period</span>{% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <p class="small text-secondary mt-3 mb-0">{{ forecast_summary.message }} Forecasts support planning and do not reserve collection capacity.</p>
+        {% else %}
+          <div class="p-4 bg-light rounded-3 border text-center">
+            <p class="text-secondary mb-3">{{ forecast_summary.message }}</p>
+            <a class="btn-saas btn-secondary btn-sm" href="{% url 'accounts:institution_profile' %}">Complete Institution Profile</a>
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- UI-13: Collection Request Management -->
+      <section id="collection-requests" class="mb-4" aria-labelledby="collection-requests-heading">
+        <div class="mb-3">
+          <span class="badge-saas">Collection management</span>
+          <h2 id="collection-requests-heading" class="h5 fw-bold mb-1">Collection Requests &amp; Recent Activity</h2>
+          <p class="small text-secondary mb-0">Track partner responses, scheduled pickups, and completed weights.</p>
+        </div>
+        <div class="row g-3">
+          <div class="col-12" data-collection-empty-state><div class="empty-state card-saas p-4"><h3 class="h6 fw-bold">No collection requests yet</h3><p class="text-secondary small mb-0">Choose a recycler from an available listing to create a pickup request.</p></div></div>
+          {% for item in listings %}
+            {% for collection in item.collections.all %}
+              <div class="col-12 col-xl-6" data-sustainability-collection="{{ collection.status }}" data-final-kg="{{ collection.final_collected_quantity_kg|default_if_none:'0' }}">
+                <article class="collection-overview-card p-3 h-100">
+                  <div class="d-flex justify-content-between align-items-start gap-3">
+                    <div>
+                      <div class="fw-bold">{{ item.get_paper_type_display }} · {{ collection.estimated_quantity|default:item.quantity_kg }} kg estimated</div>
+                      <div class="small text-secondary">Requested {{ collection.requested_at|date:"M j, Y" }} · {{ item.pickup_city|default:"Location pending" }}</div>
+                      {% if collection.final_collected_quantity_kg %}<div class="small fw-semibold text-success mt-1">Final: {{ collection.final_collected_quantity_kg }} kg</div>{% endif %}
+                    </div>
+                    <span class="status-pill {% if collection.status == 'requested' %}status-pill-warning{% elif collection.status == 'accepted' or collection.status == 'scheduled' %}status-pill-info{% elif collection.status == 'collected' %}status-pill-success{% else %}status-pill-neutral{% endif %}">{{ collection.get_status_display }}</span>
+                  </div>
+                  <div class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                    <a class="btn-saas btn-secondary btn-sm" href="{% url 'accounts:collection_detail' collection.pk %}">Track Collection</a>
+                    {% if collection.status == 'requested' %}
+                      <form method="post" action="{% url 'accounts:institution_cancel_collection' collection.pk %}">{% csrf_token %}<button class="btn-saas btn-secondary btn-sm text-danger" type="submit">Cancel Request</button></form>
+                    {% elif collection.status == 'collected' %}
+                      <a class="btn-saas btn-secondary btn-sm" href="{% url 'accounts:transaction_history' %}">View Recycling Record</a>
+                    {% endif %}
+                  </div>
+                </article>
+              </div>
+            {% endfor %}
+          {% empty %}
+            <div class="col-12"><div class="empty-state card-saas"><h3 class="h6 fw-bold">No collection requests yet</h3><p class="text-secondary small mb-0">Choose a recycler from an available listing to create a pickup request.</p></div></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <!-- UI-09: My Paper Listings (searchable data table with status filters) -->
+      <section id="my-listings" class="card-saas p-0 overflow-hidden mb-4">
+        <div class="d-flex justify-content-between align-items-center p-3 p-md-4 border-bottom">
+          <div>
+            <h2 class="h5 fw-bold text-dark mb-1">Your paper listings</h2>
+            <p class="small text-secondary mb-0">Partners see only listings that are available.</p>
+          </div>
+          <a class="btn-saas btn-primary btn-sm" href="{% url 'accounts:listing_create' %}">Create Listing</a>
+        </div>
+
+        {% if listings %}
+          <form class="filter-toolbar" data-table-filter data-table-target="#institution-listings-table" data-count-target="#listing-filter-count" role="search">
+            <div class="row g-2 align-items-end">
+              <div class="col-12 col-md-7"><label class="form-label small fw-semibold" for="listing-search">Search listings</label><input class="form-control" id="listing-search" type="search" data-filter-field="search" placeholder="Paper type, city or address"></div>
+              <div class="col-8 col-md-3"><label class="form-label small fw-semibold" for="listing-status-filter">Status</label><select class="form-select" id="listing-status-filter" data-filter-field="status"><option value="">All statuses</option><option value="draft">Draft</option><option value="available">Available</option><option value="reserved">Reserved</option><option value="completed">Completed</option><option value="cancelled">Withdrawn</option></select></div>
+              <div class="col-4 col-md-2"><button class="btn-saas btn-secondary w-100" type="button" data-filter-reset>Reset</button></div>
+            </div>
+            <div id="listing-filter-count" class="small text-secondary mt-2" aria-live="polite"></div>
+          </form>
+          <div class="table-responsive">
+            <table id="institution-listings-table" class="table table-hover align-middle mb-0">
+              <thead>
                 <tr>
-                  <td class="ps-3 ps-md-4">
-                    <div class="d-flex align-items-center gap-3">
-                      {% if listing.photo %}
-                        <img src="{% url 'accounts:listing_photo' listing.pk %}" alt="Photo for {{ listing.get_paper_type_display }} listing" width="52" height="52" class="rounded object-fit-cover border">
+                  <th scope="col" class="ps-3 ps-md-4">Paper</th>
+                  <th scope="col">Estimated amount</th>
+                  <th scope="col">Pickup location</th>
+                  <th scope="col">Collection period</th>
+                  <th scope="col">Status</th>
+                  <th scope="col" class="text-end pe-3 pe-md-4">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in listings %}
+                  <tr data-filter-row data-status="{{ item.status }}" data-search="{{ item.get_paper_type_display }} {{ item.category_details }} {{ item.pickup_city }} {{ item.pickup_address }}">
+                    <td class="ps-3 ps-md-4">
+                      <strong>{{ item.get_paper_type_display }}</strong>
+                      {% if item.category_details %}<div class="small text-secondary">{{ item.category_details }}</div>{% endif %}
+                      {% if item.collections.all %}
+                        {% for collection in item.collections.all %}
+                          {% if collection.status != "cancelled" %}
+                            <div class="small mt-1">
+                              <a class="text-success text-decoration-none fw-semibold" href="{% url 'accounts:collection_detail' collection.pk %}">
+                                Collection #{{ collection.pk }} ({{ collection.get_status_display }})
+                              </a>
+                            </div>
+                          {% endif %}
+                        {% endfor %}
                       {% endif %}
-                      <div>
-                        <div class="fw-semibold">{{ listing.get_paper_type_display }}</div>
-                        {% if listing.category_details %}
-                          <div class="small text-secondary">{{ listing.category_details }}</div>
+                      {% if item.has_collection_activity %}
+                        <div class="text-secondary small mt-1">Editing and withdrawal are locked after collection activity.</div>
+                      {% endif %}
+                    </td>
+                    <td><span class="fw-bold text-dark">{{ item.quantity_kg }} kg</span></td>
+                    <td>
+                      <span class="text-dark">{{ item.pickup_city|default:"Not specified" }}{% if item.pickup_country %}, {{ item.pickup_country }}{% endif %}</span>
+                      {% if item.pickup_address %}<div class="small text-secondary">{{ item.pickup_address }}</div>{% endif %}
+                    </td>
+                    <td>
+                      <div class="small text-secondary">
+                        {% if item.available_from %}{{ item.available_from|date:"M j" }}{% else %}Flexible{% endif %}
+                        {% if item.available_until %} – {{ item.available_until|date:"M j, Y" }}{% endif %}
+                      </div>
+                    </td>
+                    <td>
+                      {% if item.status == "available" %}
+                        <span class="status-pill status-pill-success">{{ item.get_status_display }}</span>
+                      {% elif item.status == "matched" %}
+                        <span class="status-pill status-pill-info">{{ item.get_status_display }}</span>
+                      {% elif item.status == "cancelled" %}
+                        <span class="status-pill status-pill-neutral">Withdrawn</span>
+                      {% else %}
+                        <span class="status-pill status-pill-neutral">{{ item.get_status_display }}</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end pe-3 pe-md-4">
+                      <div class="d-inline-flex gap-2">
+                        {% if item.status == "available" and not item.has_collection %}
+                          <a class="btn-saas btn-primary btn-sm py-1 px-2" href="{% url 'accounts:listing_recommendations' item.pk %}">Find Recycler</a>
+                        {% endif %}
+                        {% if not item.has_collection_activity and item.status != "cancelled" %}
+                          <a class="btn-saas btn-secondary btn-sm py-1 px-2" href="{% url 'accounts:listing_edit' item.pk %}">Edit</a>
                         {% endif %}
                       </div>
-                    </div>
-                  </td>
-                  <td class="text-nowrap">{{ listing.quantity_kg }} kg</td>
-                  <td>{{ listing.pickup_city }}{% if listing.pickup_country %}, {{ listing.pickup_country }}{% endif %}</td>
-                  <td class="text-nowrap small">
-                    {% if listing.available_from %}{{ listing.available_from|date:"M j, Y" }}{% else %}Flexible{% endif %}
-                    {% if listing.available_until %}<br>to {{ listing.available_until|date:"M j, Y" }}{% endif %}
-                  </td>
-                  <td>
-                    {% with latest_col=listing.collections.first %}
-                      {% if latest_col and latest_col.status == 'requested' %}
-                        <span class="badge rounded-pill text-bg-warning">Collection Requested</span>
-                        <div class="small text-secondary mt-1">Pending partner review</div>
-                      {% elif latest_col and latest_col.status == 'accepted' %}
-                        <span class="badge rounded-pill text-bg-info text-white">Accepted</span>
-                        <div class="small text-secondary mt-1">Awaiting scheduling</div>
-                      {% elif latest_col and latest_col.status == 'scheduled' %}
-                        <span class="badge rounded-pill text-bg-primary">Scheduled</span>
-                        <div class="small text-secondary mt-1">{{ latest_col.scheduled_for|date:"M j, g:i A" }}</div>
-                      {% elif latest_col and latest_col.status == 'collected' or listing.status == 'completed' %}
-                        <span class="badge rounded-pill text-bg-success">Completed</span>
-                        {% if latest_col.final_collected_quantity_kg %}
-                          <div class="small text-success fw-bold mt-1">Final: {{ latest_col.final_collected_quantity_kg }} kg</div>
-                        {% endif %}
-                      {% elif listing.status == 'available' %}
-                        <span class="badge rounded-pill text-bg-success">Available</span>
-                        {% if latest_col and latest_col.status == 'rejected' %}
-                          <div class="small text-danger mt-1">Prev request rejected</div>
-                        {% endif %}
-                      {% elif listing.status == 'draft' %}
-                        <span class="badge rounded-pill text-bg-secondary">Draft</span>
-                      {% elif listing.status == 'cancelled' %}
-                        <span class="badge rounded-pill text-bg-light border text-secondary">Withdrawn</span>
-                      {% else %}
-                        <span class="badge rounded-pill text-bg-light border text-secondary">{{ listing.get_status_display }}</span>
-                      {% endif %}
-                    {% endwith %}
-                  </td>
-                  <td class="text-end pe-3 pe-md-4">
-                    {% with latest_col=listing.collections.first %}
-                      {% if not listing.has_collection_activity and listing.status == 'available' %}
-                        <div class="d-inline-flex gap-2">
-                          <a class="btn btn-sm btn-success" href="{% url 'accounts:listing_recommendations' listing.pk %}">Find Recycler</a>
-                          <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:listing_edit' listing.pk %}">Edit</a>
-                          <form method="post" action="{% url 'accounts:listing_cancel' listing.pk %}">
-                            {% csrf_token %}
-                            <button class="btn btn-sm btn-outline-secondary" type="submit" aria-label="Withdraw {{ listing.get_paper_type_display }} listing">Withdraw</button>
-                          </form>
-                        </div>
-                      {% elif not listing.has_collection_activity and listing.status == 'draft' %}
-                        <div class="d-inline-flex gap-2">
-                          <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:listing_edit' listing.pk %}">Edit</a>
-                          <form method="post" action="{% url 'accounts:listing_cancel' listing.pk %}">
-                            {% csrf_token %}
-                            <button class="btn btn-sm btn-outline-secondary" type="submit" aria-label="Withdraw {{ listing.get_paper_type_display }} listing">Withdraw</button>
-                          </form>
-                        </div>
-                      {% elif latest_col and listing.has_collection %}
-                        <div class="d-inline-flex gap-2 align-items-center">
-                          <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:collection_detail' latest_col.pk %}">Track Status</a>
-                          {% if latest_col.status == 'requested' %}
-                            <form method="post" action="{% url 'accounts:institution_cancel_collection' latest_col.pk %}">
-                              {% csrf_token %}
-                              <button class="btn btn-sm btn-outline-danger" type="submit" onclick="return confirm('Cancel this collection request?');">Cancel</button>
-                            </form>
-                          {% endif %}
-                        </div>
-                      {% elif listing.status == 'available' and listing.has_collection_activity %}
-                        <div class="d-inline-flex flex-column align-items-end gap-1">
-                          <a class="btn btn-sm btn-success" href="{% url 'accounts:listing_recommendations' listing.pk %}">Find Recycler</a>
-                          <span class="small text-secondary">Editing and withdrawal are locked after collection activity.</span>
-                        </div>
-                      {% elif latest_col and latest_col.status == 'collected' %}
-                        <a class="btn btn-sm btn-outline-success" href="{% url 'accounts:collection_detail' latest_col.pk %}">View Details</a>
-                      {% elif listing.status == 'cancelled' %}
-                        <span class="small text-secondary">Withdrawn</span>
-                      {% endif %}
-                    {% endwith %}
-                  </td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% else %}
-        <div class="text-center px-3 py-5">
-          <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center mb-3" style="width:56px;height:56px" aria-hidden="true"><span class="fs-4">＋</span></div>
-          <h3 class="h5">No paper listings yet</h3>
-          <p class="text-secondary mx-auto" style="max-width:420px">Add a paper category, estimated amount, pickup location, and preferred collection dates to get started.</p>
-          <a class="btn btn-success" href="{% url 'accounts:listing_create' %}">Create your first listing</a>
-        </div>
-      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <h3 class="h5 fw-bold text-dark">No Paper Listings Yet</h3>
+            <p class="text-secondary small mb-3">Create your first paper listing to begin matching with verified recycling partners.</p>
+            <a class="btn-saas btn-primary" href="{% url 'accounts:listing_create' %}">Create Listing</a>
+          </div>
+        {% endif %}
+      </section>
+
     </div>
-  </section>
+  </div>
 </div>
 {% endblock %}

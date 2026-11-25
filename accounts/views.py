@@ -1,7 +1,9 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
-from django.db.models import Exists, OuterRef, Q, Sum
+from django.db.models import Count, Exists, OuterRef, Q, Sum
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -756,4 +758,25 @@ def digital_record_view(request, transaction_id):
 def permission_denied(request, exception=None):
 
     return render(request, "403.html", status=403)
+
+
+def landing_view(request):
+    completed_impact = Transaction.objects.aggregate(
+        completed_transfers=Count("pk"),
+        recovered_paper_kg=Sum("quantity_kg"),
+    )
+    verified_recycler_count = RecyclingProfile.objects.filter(
+        user__is_active=True,
+        user__verification_status=VerificationStatus.VERIFIED,
+    ).count()
+    return render(request, "accounts/landing.html", {
+        "landing_completed_transfers": completed_impact["completed_transfers"],
+        "landing_recovered_paper_kg": completed_impact["recovered_paper_kg"] or Decimal("0"),
+        "landing_verified_recyclers": verified_recycler_count,
+    })
+
+
+def about_view(request):
+    return render(request, "accounts/about.html")
+
 

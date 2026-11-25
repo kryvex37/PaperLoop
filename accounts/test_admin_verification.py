@@ -23,15 +23,16 @@ class AdminVerificationFR02Tests(TestCase):
         )
         self.model_admin = admin.site._registry[User]
 
-    def test_admin_home_uses_bootstrap_operations_dashboard(self):
+    def test_admin_home_uses_paperloop_operations_dashboard(self):
         self.client.force_login(self.admin_user)
 
         response = self.client.get(reverse("admin:index"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Marketplace administration")
-        self.assertContains(response, "card shadow-sm paperloop-admin-card")
-        self.assertContains(response, "bootstrap@5.3.9")
+        self.assertContains(response, "PaperLoop operations")
+        self.assertContains(response, "paperloop-admin-overview-card")
+        self.assertContains(response, "admin-brand.css")
+        self.assertContains(response, "Platform overview")
         self.assertContains(response, reverse("admin:accounts_user_changelist"))
 
     def action_request(self):

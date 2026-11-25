@@ -1,0 +1,53 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block branding %}
+  <h1 id="site-name" class="paperloop-admin-branding">
+    <a href="{% url 'admin:index' %}">
+      <img src="{% static 'img/paperloop-logo.webp' %}" alt="" width="40" height="40">
+      <span>PaperLoop</span>
+    </a>
+  </h1>
+{% endblock %}
+
+{% block nav-sidebar %}
+  <div class="paperloop-admin-sidebar-brand">
+    <a href="{% url 'admin:index' %}">
+      <img src="{% static 'img/paperloop-logo.webp' %}" alt="" width="40" height="40">
+      <span>PaperLoop</span>
+    </a>
+  </div>
+  <nav class="paperloop-admin-quicknav" aria-label="PaperLoop administration">
+    <div class="paperloop-admin-theme">{% include "accounts/components/theme_switcher.html" with variant="dropdown" %}</div>
+    <a href="{% url 'admin:index' %}" class="{% if request.resolver_match.url_name == 'index' %}is-active{% endif %}"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-layout-dashboard"></use></svg> Dashboard</a>
+    <div class="paperloop-admin-nav-label">Organizations</div>
+    <a href="{% url 'admin:accounts_educationalinstitution_changelist' %}"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-school"></use></svg> Institution directory</a>
+    <a href="{% url 'admin:accounts_recyclingprofile_changelist' %}"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-recycle"></use></svg> Recycler partners</a>
+    <a href="{% url 'admin:accounts_user_changelist' %}?verification_status__exact=pending"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-clipboard-check"></use></svg> Verification queue</a>
+    <div class="paperloop-admin-nav-label">Platform</div>
+    <a href="{% url 'admin:accounts_user_changelist' %}"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-users-round"></use></svg> User management</a>
+    <a href="{% url 'admin:index' %}#admin-platform-overview"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-chart-no-axes-combined"></use></svg> Platform overview</a>
+    <a href="{% url 'admin:accounts_transaction_changelist' %}"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-receipt-text"></use></svg> Transactions</a>
+  </nav>
+  {{ block.super }}
+{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="preload" href="{% static 'fonts/dm-sans-latin-400.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/manrope-latin-700.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{% static 'css/admin-brand.css' %}?v=4">
+  <link rel="stylesheet" href="{% static 'css/paperloop-visual.css' %}?v=1">
+  <link rel="stylesheet" href="{% static 'css/paperloop-themes.css' %}?v=16">
+  <script>
+    (() => { const key = "paperloop.theme"; const valid = ["light", "dark", "forest", "system"]; let saved = "system"; try { const value = localStorage.getItem(key); if (valid.includes(value)) saved = value; } catch (_) {} const dark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)").matches : false; document.documentElement.dataset.themePreference = saved; document.documentElement.dataset.theme = saved === "system" ? (dark ? "dark" : "light") : saved; })();
+  </script>
+{% endblock %}
+
+{% block extrabody %}
+  {{ block.super }}
+  <script src="{% static 'js/vendor/gsap.min.js' %}?v=3.15.1" defer></script>
+  <script src="{% static 'js/admin-actions.js' %}" defer></script>
+  <script src="{% static 'js/theme-system.js' %}?v=1" defer></script>
+  <script src="{% static 'js/institution-ui.js' %}?v=7" defer></script>
+{% endblock %}
