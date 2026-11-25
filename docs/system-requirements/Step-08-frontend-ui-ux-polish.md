@@ -18,4 +18,21 @@ Bootstrap-based templates are used by the institution and recycler dashboards, a
 
 ### Verification status
 
-The FR-03/FR-05 listing and FR-09/FR-10 collection workflows use `TransactionTestCase` so requests run under PostgreSQL autocommit behavior. The full suite passes all 87 tests, including assertions for the Bootstrap admin dashboard and recommendation card output. Browser-level visual review remains outstanding because no local browser renderer is installed. See [the master roadmap](../project-roadmap.md).
+- **Partner Recommendations (`/institution/listings/<id>/recommendations/`):**
+  - **Match Score Bar & Pill:** Features visual match percentage indicators (e.g. `98% Match`, `AI Rank Score`).
+  - **Structured 4-Factor Reason Cards:**
+    1. **Material Grade Match:** Confirms accepted paper categories.
+    2. **Capacity Match:** Displays exact available capacity vs. listing load.
+    3. **Location & Service Area:** Clear proximity and service coverage indicator.
+    4. **Reliability & History:** Partner ratings, fulfillment statistics, and verified credentials.
+  - **Explainability Breakdown:** Detailed decision attribution box showing exact positive model factors.
+  - **Direct Request Integration:** Inline collection request form with optional pickup notes.
+- **AI Bulk Pickup Bundles (`/ai/bulk-aggregation/`):**
+  - Visual candidate cards with 4 key metrics: **Truck Utilization %**, **Distance Saved (km)**, **Transport Cost / kg**, and **Optimization Score**.
+  - Clear participants breakdown table and decision explanation factors.
+
+---
+
+### 3. Automated Test Verification
+
+The original Step 8 verification passed 61 tests. Step 9 added six registration, admin, listing, and media integration tests; the current 67-test PostgreSQL result is recorded in [Step 9 integration and testing](Step-09-system-integration-and-testing.md).

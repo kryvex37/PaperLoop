@@ -3,7 +3,7 @@
 ## Runtime architecture
 
 - Django 5.2 is the application framework and ORM. `AUTH_USER_MODEL` points to the email-based `accounts.User` model.
-- PostgreSQL is selected through `DATABASE_URL` or the `DB_*` environment variables; `psycopg` is the PostgreSQL driver. SQLite remains the local fallback when neither connection method is configured.
+- PostgreSQL is required and selected through `DATABASE_URL` or the `DB_*` environment variables; `psycopg` is the PostgreSQL driver. Django raises a configuration error if neither connection method is configured.
 - The `accounts` app owns authentication, organization profiles, role checks, listings, collections, and transaction records. Schema changes are versioned in Django migrations.
 - Django admin is the initial platform management interface. Staff can review and manage organization accounts and inspect domain records.
 
