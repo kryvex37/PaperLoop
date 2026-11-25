@@ -1,0 +1,39 @@
+{% load static %}
+<aside class="signin-story auth-story-panel" aria-label="About PaperLoop">
+  <a class="auth-story-brand" href="{% url 'accounts:landing' %}" aria-label="PaperLoop home">
+    <img src="{% static 'img/paperloop-logo.webp' %}" alt="" width="48" height="48">
+    <span>PaperLoop</span>
+  </a>
+
+  <button class="motion-toggle" type="button" aria-pressed="true" aria-label="Pause ambient motion" data-auth-motion-toggle>
+    <span class="motion-indicator" aria-hidden="true"></span>
+    <span data-motion-label>Pause motion</span>
+  </button>
+
+  <div class="story-heading">
+    <span class="story-kicker"><span class="story-kicker-dot"></span> {{ auth_kicker }}</span>
+    <h1>{{ auth_heading }}</h1>
+    <p>{{ auth_support }}</p>
+  </div>
+
+  <div class="loop-visual" aria-hidden="true">
+    <div class="paper-sheet paper-sheet-back"></div>
+    <div class="paper-sheet paper-sheet-front"></div>
+    <div class="loop-ring loop-ring-outer"></div>
+    <div class="loop-ring loop-ring-inner"></div>
+    <div class="loop-center">
+      <svg viewBox="0 0 48 48" fill="none"><path d="M13 8h15l8 8v23H13a3 3 0 0 1-3-3V11a3 3 0 0 1 3-3Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M28 8v9h8M17 25h14M17 31h10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="m20 18 3 3 3-3" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="orbit-card orbit-institution animate-float">
+      <span class="orbit-icon orbit-icon-school"><svg viewBox="0 0 24 24" fill="none"><path d="m3 9 9-5 9 5-9 5-9-5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 11v5c3.4 2.8 8.6 2.8 12 0v-5M21 9v6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+      <span><strong>{{ auth_card_one|default:"Educational institutions" }}</strong><small>{{ auth_card_one_note|default:"Paper ready to list" }}</small></span>
+    </div>
+    <div class="orbit-card orbit-partner animate-float">
+      <span class="orbit-icon orbit-icon-recycle"><svg viewBox="0 0 24 24" fill="none"><path d="m8 5 2-2 2 2M10 3v4l-3 5M5 12H3l2-3M5 12l3 2M15 5l2 1 1 3M17 6l-3 2 2 5M18 14l1 2-2 2M19 16h-4l-3-5M7 18l-2 1-2-2M5 19l1-4 4-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span><strong>{{ auth_card_two|default:"Recycling partners" }}</strong><small>{{ auth_card_two_note|default:"Collection in motion" }}</small></span>
+    </div>
+    <span class="orbit-dot orbit-dot-one"></span><span class="orbit-dot orbit-dot-two"></span><span class="orbit-dot orbit-dot-three"></span>
+  </div>
+
+  <div class="auth-story-footer"><span class="auth-story-footer-line"></span><span>Paper, better connected.</span></div>
+</aside>

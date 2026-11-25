@@ -1,0 +1,18 @@
+{% load static %}
+<div class="pl-theme-switcher{% if variant == 'settings' %} pl-theme-switcher-settings{% endif %}" data-theme-switcher data-theme-variant="{{ variant|default:'dropdown' }}">
+  {% if variant != 'settings' %}
+    <button class="pl-theme-trigger" type="button" data-theme-toggle aria-haspopup="true" aria-expanded="false" aria-label="Choose appearance">
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-monitor"></use></svg>
+      <span class="pl-theme-trigger-label">Appearance</span><span class="pl-theme-current-label" data-theme-current>System</span>
+      <svg class="pl-icon pl-theme-chevron" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-chevron-down"></use></svg>
+    </button>
+  {% else %}
+    <div class="pl-theme-settings-copy"><span class="pl-theme-settings-kicker">Personalize</span><h2>Appearance</h2><p>Choose how PaperLoop looks on this device.</p></div>
+  {% endif %}
+  <div class="pl-theme-options{% if variant == 'settings' %} pl-theme-options-settings{% endif %}" data-theme-options{% if variant != 'settings' %} role="menu" aria-label="Appearance theme" hidden{% endif %}>
+    <button type="button" class="pl-theme-option" data-theme-option="light"{% if variant != 'settings' %} role="menuitemradio"{% endif %} aria-pressed="false"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-sun"></use></svg><span>Light</span><span class="pl-theme-option-check" aria-hidden="true">✓</span></button>
+    <button type="button" class="pl-theme-option" data-theme-option="dark"{% if variant != 'settings' %} role="menuitemradio"{% endif %} aria-pressed="false"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-moon"></use></svg><span>Dark</span><span class="pl-theme-option-check" aria-hidden="true">✓</span></button>
+    <button type="button" class="pl-theme-option" data-theme-option="forest"{% if variant != 'settings' %} role="menuitemradio"{% endif %} aria-pressed="false"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-tree-pine"></use></svg><span>Forest</span><span class="pl-theme-option-check" aria-hidden="true">✓</span></button>
+    <button type="button" class="pl-theme-option" data-theme-option="system"{% if variant != 'settings' %} role="menuitemradio"{% endif %} aria-pressed="false"><svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-monitor"></use></svg><span>System</span><span class="pl-theme-option-check" aria-hidden="true">✓</span></button>
+  </div>
+</div>

@@ -1,0 +1,33 @@
+{% load static %}
+<aside class="dashboard-sidebar recycler-sidebar mb-4 mb-lg-0" aria-label="Recycler workspace navigation">
+  <div class="saas-sidebar recycler-sidebar-panel">
+    <a class="dashboard-sidebar-brand" href="{% url 'accounts:partner_dashboard' %}" aria-label="PaperLoop recycler dashboard">
+      <img class="brand-logo-image" src="{% static 'img/paperloop-logo.webp' %}" alt="" width="40" height="40">
+      <span class="logo-text">PaperLoop</span>
+    </a>
+    <div class="sidebar-title">Recycler workspace</div>
+    <a href="{% url 'accounts:partner_dashboard' %}" class="sidebar-link {% if active_nav == 'dashboard' %}active{% endif %}" {% if active_nav == 'dashboard' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-layout-dashboard"></use></svg><span>Dashboard</span>
+    </a>
+    <a href="{% url 'accounts:partner_dashboard' %}#available-listings" data-sidebar-anchor="available-listings" class="sidebar-link {% if active_nav == 'listings' %}active{% endif %}" {% if active_nav == 'listings' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-list"></use></svg><span>Available Listings</span>
+    </a>
+    <a href="{% url 'accounts:partner_dashboard' %}#incoming-requests" data-sidebar-anchor="incoming-requests" class="sidebar-link {% if active_nav == 'requests' %}active{% endif %}" {% if active_nav == 'requests' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-clipboard-list"></use></svg><span>Collection Requests</span>
+    </a>
+    <a href="{% url 'accounts:partner_dashboard' %}#active-collections" data-sidebar-anchor="active-collections" class="sidebar-link {% if active_nav == 'collections' %}active{% endif %}" {% if active_nav == 'collections' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-clock-3"></use></svg><span>Active Collections</span>
+    </a>
+    <a href="{% url 'accounts:transaction_history' %}" class="sidebar-link {% if active_nav == 'transactions' %}active{% endif %}" {% if active_nav == 'transactions' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-receipt-text"></use></svg><span>Transaction History</span>
+    </a>
+    <div class="sidebar-title sidebar-title-account">Account</div>
+    <a href="{% url 'accounts:partner_profile_detail' %}" class="sidebar-link {% if active_nav == 'profile' %}active{% endif %}" {% if active_nav == 'profile' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-user-round"></use></svg><span>Recycler Profile</span>
+    </a>
+    <a href="{% url 'accounts:partner_profile' %}" class="sidebar-link {% if active_nav == 'settings' %}active{% endif %}" {% if active_nav == 'settings' %}aria-current="page"{% endif %}>
+      <svg class="pl-icon" aria-hidden="true"><use href="{% static 'img/lucide-icons.svg' %}#icon-settings"></use></svg><span>Capacity &amp; Settings</span>
+    </a>
+    <div class="sidebar-workspace-note"><span class="sidebar-note-dot"></span><span>Recycler workspace</span></div>
+  </div>
+</aside>

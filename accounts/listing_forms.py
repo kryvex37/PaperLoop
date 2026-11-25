@@ -58,7 +58,7 @@ class PaperListingForm(forms.ModelForm):
     def clean_photo(self):
         photo = self.cleaned_data.get("photo")
         if photo and getattr(photo, "size", 0) > 5 * 1024 * 1024:
-            raise ValidationError("Choose an image smaller than 5 MB.")
+            raise ValidationError("Choose an image that is 5 MB or smaller.")
         return photo
 
     def clean(self):

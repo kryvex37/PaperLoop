@@ -1,7 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Partner Profile &amp; Capacity · PaperLoop{% endblock %}
+{% block topbar_section %}Account{% endblock %}
+{% block topbar_title %}Profile &amp; Capacity Settings{% endblock %}
+{% block body_class %}recycler-body{% endblock %}
 {% block content %}
-<main class="container py-4" style="max-width: 800px;">
+<div class="container-fluid px-lg-4 py-4"><div class="row g-4"><div class="col-12 col-lg-3 col-xl-2">{% include "accounts/components/recycler_sidebar.html" with active_nav="settings" %}</div><div class="col-12 col-lg-9 col-xl-10"><div class="recycler-profile-settings">
+  {% include "accounts/components/theme_switcher.html" with variant="settings" %}
   <a class="link-success text-decoration-none small" href="{% url 'accounts:partner_dashboard' %}">← Back to dashboard</a>
   <header class="my-4">
     <p class="text-uppercase text-success fw-bold small mb-1">Recycling / Collection Partner</p>
@@ -42,5 +46,5 @@
     </div>
     <div class="card-footer bg-light border-0 p-3 d-flex justify-content-end gap-2"><a class="btn btn-outline-secondary" href="{% url 'accounts:partner_dashboard' %}">Cancel</a><button class="btn btn-success" type="submit">Save profile</button></div>
   </form>
-</main>
+</div></div></div></div>
 {% endblock %}

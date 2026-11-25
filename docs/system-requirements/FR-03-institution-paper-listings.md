@@ -12,6 +12,8 @@ This implementation follows the Step 3 request and the functional requirements i
 
 ## Access and data handling
 
+The institution dashboard supports saving a listing as a draft, publishing it, editing it, and withdrawing it. A rejected collection request leaves the listing available for another partner selection, but its non-cancelled collection record locks edits and withdrawal. A cancelled collection record does not lock the listing.
+
 All create, edit, withdraw, dashboard, and photo requests require an authenticated, verified institution role. Queries bind listing operations and photo access to the signed-in institution. Uploaded photos use Django image validation and are returned through an authenticated owner-only endpoint; photo-based recognition is outside scope.
 
 The initial category set is a product vocabulary assumption because the proposal does not enumerate categories. The list can be updated as the marketplace's paper taxonomy is confirmed.

@@ -74,5 +74,5 @@ Deployment commands and variables are described in [Step 10 deployment and evalu
 
 - `DJANGO_DEBUG` defaults to `true` for local development. Set it to `false`, use a strong secret, configure allowed hosts, HTTPS, and deployment-specific security settings before exposing the application.
 - Public registration cannot create platform administrator accounts. Create administrators with `createsuperuser` or through the Django admin.
-- Partner and institution dashboards are placeholders for future FR modules; their distinct access boundaries are already enforced server-side.
-- This is a prototype foundation. Email verification, rate limiting, organization verification, password reset flows, and FR-02 activation policy are not part of FR-01.
+- Institution and partner dashboards include listing, profile, recommendation, collection, and transaction workflows described above. Admin verification is implemented with the initial policy documented in `docs/system-architecture-and-schema.md`; confirm that policy against the canonical proposal before production use.
+- Email address confirmation, rate limiting, and password reset flows are not implemented. AI artifacts are generated locally and are not committed; generate them with the documented training command before expecting trained-model ranking. Synthetic-data metrics are not production validation.

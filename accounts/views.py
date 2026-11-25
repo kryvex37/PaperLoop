@@ -1,7 +1,9 @@
+from decimal import Decimal
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
-from django.db.models import Exists, OuterRef, Q, Sum
+from django.db import IntegrityError, transaction
+from django.db.models import Count, Exists, OuterRef, Q, Sum
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -28,6 +30,7 @@ from .models import (
     PaperListing,
     RecyclingProfile,
     Transaction,
+    User,
     UserRole,
     VerificationStatus,
 )
@@ -41,12 +44,22 @@ def register(request):
 
     form = RegistrationForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        user = form.save()
-        messages.success(
-            request,
-            "Your PaperLoop account has been created. You can now sign in.",
-        )
-        return redirect("accounts:login")
+        try:
+            form.save()
+        except IntegrityError:
+            # The case-insensitive uniqueness check in the form can race with
+            # another registration. Convert that database conflict into the
+            # same field-level error instead of returning a server error.
+            email = form.cleaned_data.get("email", "")
+            if not User.objects.filter(email__iexact=email).exists():
+                raise
+            form.add_error("email", "An account with this email address already exists.")
+        else:
+            messages.success(
+                request,
+                "Your PaperLoop account has been created. You can now sign in.",
+            )
+            return redirect("accounts:login")
     return render(request, "accounts/register.html", {"form": form})
 
 
@@ -74,10 +87,14 @@ def institution_dashboard(request):
         listing=OuterRef("pk"),
         status__in=ACTIVE_ALLOCATION_STATUSES,
     )
+    non_cancelled_collections = Collection.objects.filter(
+        listing=OuterRef("pk"),
+    ).exclude(status=Collection.Status.CANCELLED)
     listings = (
         PaperListing.objects.filter(institution=institution)
         .prefetch_related("collections__partner__user")
         .annotate(has_collection=Exists(active_collections))
+        .annotate(has_collection_activity=Exists(non_cancelled_collections))
         .order_by("-created_at")
     )
     return render(
@@ -119,9 +136,16 @@ def create_listing(request):
     if request.method == "POST" and form.is_valid():
         listing = form.save(commit=False)
         listing.institution = institution
-        listing.status = PaperListing.Status.AVAILABLE
+        listing.status = (
+            PaperListing.Status.DRAFT
+            if request.POST.get("listing_action") == "draft"
+            else PaperListing.Status.AVAILABLE
+        )
         listing.save()
-        messages.success(request, "Your paper listing is now available to recycling partners.")
+        if listing.status == PaperListing.Status.DRAFT:
+            messages.success(request, "Your paper listing has been saved as a draft.")
+        else:
+            messages.success(request, "Your paper listing is now available to recycling partners.")
         return redirect("accounts:institution_dashboard")
     return render(request, "accounts/listing_form.html", {"form": form, "page_title": "Create a paper listing"})
 
@@ -131,16 +155,45 @@ def create_listing(request):
 def edit_listing(request, listing_id):
     institution = get_object_or_404(EducationalInstitution, user=request.user)
     listing = get_object_or_404(PaperListing, pk=listing_id, institution=institution)
-    can_edit = listing.status in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE)
-    has_collection = listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists()
-    if not can_edit or has_collection:
-        messages.error(request, "This listing can no longer be edited after collection activity has started.")
-        return redirect("accounts:institution_dashboard")
+    if request.method == "GET":
+        has_non_cancelled_collection = listing.collections.exclude(
+            status=Collection.Status.CANCELLED
+        ).exists()
+        if (
+            listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE)
+            or has_non_cancelled_collection
+        ):
+            messages.error(request, "This listing cannot be edited after a non-cancelled collection request exists.")
+            return redirect("accounts:institution_dashboard")
     form = PaperListingForm(request.POST or None, request.FILES or None, instance=listing)
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "Your paper listing has been updated.")
-        return redirect("accounts:institution_dashboard")
+    if request.method == "POST":
+        with transaction.atomic():
+            listing = get_object_or_404(
+                PaperListing.objects.select_for_update(),
+                pk=listing_id,
+                institution=institution,
+            )
+            has_non_cancelled_collection = listing.collections.exclude(
+                status=Collection.Status.CANCELLED
+            ).exists()
+            if (
+                listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE)
+                or has_non_cancelled_collection
+            ):
+                messages.error(request, "This listing cannot be edited after a non-cancelled collection request exists.")
+                return redirect("accounts:institution_dashboard")
+
+            form = PaperListingForm(request.POST, request.FILES, instance=listing)
+            if form.is_valid():
+                listing = form.save(commit=False)
+                action = request.POST.get("listing_action")
+                if action == "draft":
+                    listing.status = PaperListing.Status.DRAFT
+                elif action == "publish":
+                    listing.status = PaperListing.Status.AVAILABLE
+                listing.save()
+                messages.success(request, "Your paper listing has been updated.")
+                return redirect("accounts:institution_dashboard")
     return render(
         request,
         "accounts/listing_form.html",
@@ -152,15 +205,23 @@ def edit_listing(request, listing_id):
 @require_POST
 def cancel_listing(request, listing_id):
     institution = get_object_or_404(EducationalInstitution, user=request.user)
-    listing = get_object_or_404(PaperListing, pk=listing_id, institution=institution)
-    if listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE):
-        messages.error(request, "Only draft or available listings can be withdrawn.")
-    elif listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
-        messages.error(request, "This listing cannot be withdrawn after collection activity has started.")
-    else:
-        listing.status = PaperListing.Status.CANCELLED
-        listing.save(update_fields=("status", "updated_at"))
-        messages.success(request, "Your listing has been withdrawn.")
+    with transaction.atomic():
+        listing = get_object_or_404(
+            PaperListing.objects.select_for_update(),
+            pk=listing_id,
+            institution=institution,
+        )
+        has_non_cancelled_collection = listing.collections.exclude(
+            status=Collection.Status.CANCELLED
+        ).exists()
+        if listing.status not in (PaperListing.Status.DRAFT, PaperListing.Status.AVAILABLE):
+            messages.error(request, "Only draft or available listings can be withdrawn.")
+        elif has_non_cancelled_collection:
+            messages.error(request, "This listing cannot be withdrawn after a non-cancelled collection request exists.")
+        else:
+            listing.status = PaperListing.Status.CANCELLED
+            listing.save(update_fields=("status", "updated_at"))
+            messages.success(request, "Your listing has been withdrawn.")
     return redirect("accounts:institution_dashboard")
 
 
@@ -248,12 +309,17 @@ def listing_recommendations(request, listing_id):
         messages.error(request, "Recommendations are only available for listings currently open for collection.")
         return redirect("accounts:institution_dashboard")
     recommendations = get_recommended_partners(listing)
+    ranking_method = (
+        "pytorch" if recommendations and all(item.get("ai_relevance") is not None for item in recommendations)
+        else "rules"
+    )
     return render(
         request,
         "accounts/listing_recommendations.html",
         {
             "listing": listing,
             "recommendations": recommendations,
+            "ranking_method": ranking_method,
         },
     )
 
@@ -452,7 +518,7 @@ def partner_reject_collection(request, collection_id):
         collection.rejection_reason = form.cleaned_data["rejection_reason"].strip()
         collection.save(update_fields=["status", "rejection_reason"])
 
-        listing = collection.listing
+        listing = PaperListing.objects.select_for_update().get(pk=collection.listing_id)
         if not listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
             listing.status = PaperListing.Status.AVAILABLE
             listing.save(update_fields=["status", "updated_at"])
@@ -521,7 +587,7 @@ def partner_complete_collection(request, collection_id):
             collection.notes = f"{collection.notes}\n[Collection completion]: {notes}".strip()
         collection.save()
 
-        listing = collection.listing
+        listing = PaperListing.objects.select_for_update().get(pk=collection.listing_id)
         listing.status = PaperListing.Status.COMPLETED
         listing.save(update_fields=["status", "updated_at"])
 
@@ -561,7 +627,7 @@ def institution_cancel_collection(request, collection_id):
         collection.notes = f"{collection.notes}\n[Cancelled by institution on {timezone.now().strftime('%Y-%m-%d %H:%M')}]".strip()
         collection.save(update_fields=["status", "notes"])
 
-        listing = collection.listing
+        listing = PaperListing.objects.select_for_update().get(pk=collection.listing_id)
         if not listing.collections.filter(status__in=ACTIVE_ALLOCATION_STATUSES).exists():
             listing.status = PaperListing.Status.AVAILABLE
             listing.save(update_fields=["status", "updated_at"])
@@ -693,4 +759,25 @@ def digital_record_view(request, transaction_id):
 def permission_denied(request, exception=None):
 
     return render(request, "403.html", status=403)
+
+
+def landing_view(request):
+    completed_impact = Transaction.objects.aggregate(
+        completed_transfers=Count("pk"),
+        recovered_paper_kg=Sum("quantity_kg"),
+    )
+    verified_recycler_count = RecyclingProfile.objects.filter(
+        user__is_active=True,
+        user__verification_status=VerificationStatus.VERIFIED,
+    ).count()
+    return render(request, "accounts/landing.html", {
+        "landing_completed_transfers": completed_impact["completed_transfers"],
+        "landing_recovered_paper_kg": completed_impact["recovered_paper_kg"] or Decimal("0"),
+        "landing_verified_recyclers": verified_recycler_count,
+    })
+
+
+def about_view(request):
+    return render(request, "accounts/about.html")
+
 

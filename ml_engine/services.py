@@ -1,8 +1,8 @@
 """Backend-facing forecast and bulk aggregation service functions.
 
-Callers pass structured feature/pickup data from an approved domain source.
-The current FR-06/08 database has no coordinates or pickup-window history,
-so aggregation deliberately does not infer missing operational data.
+Live aggregation reads geocoded, available listings and verified recycler
+profiles. It skips rows without the coordinates or pickup windows required for
+feasibility instead of inventing geographic or calendar data.
 """
 from datetime import date, datetime
 from datetime import timedelta
@@ -57,10 +57,19 @@ def forecast_institution(institution, *, weeks=4, model_path=None):
     if len(week_dates) < 4:
         return {"available": False, "source": None, "weeks": [],
                 "message": "At least four weeks of recorded paper weights are needed for a forecast."}
-    contiguous_dates = [week_dates[0] + timedelta(weeks=offset)
-                       for offset in range((week_dates[-1] - week_dates[0]).days // 7 + 1)]
-    weekly = {day: weekly.get(day, 0.0) for day in contiguous_dates}
-    week_dates = contiguous_dates
+    latest_week = week_dates[-1]
+    if latest_week < timezone.localdate() - timedelta(weeks=4):
+        return {"available": False, "source": None, "weeks": [],
+                "message": "Recent weekly paper weights are needed to make a current forecast."}
+    contiguous_tail = [latest_week]
+    for prior_week in reversed(week_dates[:-1]):
+        if (contiguous_tail[-1] - prior_week).days != 7:
+            break
+        contiguous_tail.append(prior_week)
+    week_dates = list(reversed(contiguous_tail))
+    if len(week_dates) < 4:
+        return {"available": False, "source": None, "weeks": [],
+                "message": "At least four weeks of recorded paper weights, in consecutive weeks, are needed for a forecast."}
 
     paper_types = [choice[0] for choice in PaperListing.PaperCategory.choices if choice[0] != PaperListing.PaperCategory.OTHER]
     total_grade_weight = sum(grade_totals.values()) or 1.0
