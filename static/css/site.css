@@ -1966,16 +1966,6 @@ body.signin-body::after, body.register-body::after {
   box-shadow: 0 24px 56px rgba(0, 0, 0, .42), 0 0 35px rgba(95, 222, 139, .16), inset 0 1px 0 rgba(255, 255, 255, .25);
   animation: paperloop-core-float 6s ease-in-out infinite;
 }
-.signin-body .loop-center::before {
-  position: absolute;
-  inset: 6px;
-  content: "";
-  border: 1px solid rgba(225, 255, 234, .25);
-  border-radius: 22px;
-  box-shadow: inset 0 0 22px rgba(152, 255, 180, .12);
-  transform: translateZ(10px);
-  pointer-events: none;
-}
 .signin-body .paper-sheet {
   transform-style: preserve-3d;
   backface-visibility: hidden;
@@ -2066,17 +2056,6 @@ body.signin-body::after, body.register-body::after {
   animation-duration: 4.6s;
 }
 .signin-body .loop-center svg { width: 74px; height: 74px; }
-.signin-body .loop-center::before { inset: 8px; border-radius: 34px; }
-.signin-body .loop-center::after {
-  position: absolute;
-  inset: -13px;
-  content: "";
-  border: 1px solid rgba(181, 255, 201, .34);
-  border-radius: 50%;
-  box-shadow: 0 0 28px rgba(97, 241, 149, .2), inset 0 0 18px rgba(97, 241, 149, .1);
-  transform: translateZ(-18px);
-  pointer-events: none;
-}
 .signin-body .paper-sheet { width: 112px; height: 148px; border-radius: 15px; }
 .signin-body .paper-sheet::before { inset: 30px 20px auto; height: 3px; box-shadow: 0 14px 0 rgba(65, 125, 85, .2), 0 28px 0 rgba(65, 125, 85, .18), 0 42px 0 rgba(65, 125, 85, .13); }
 .signin-body .paper-sheet::after { width: 28px; height: 28px; }

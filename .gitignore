@@ -10,3 +10,4 @@ media/
 ml_engine/artifacts/
 ml_engine/datasets/data/
 tmp/paperloop-audit-profile/
+.tmp/

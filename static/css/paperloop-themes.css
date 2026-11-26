@@ -436,6 +436,16 @@ html[data-theme="light"] :is(.bg-light,.bg-white,.card-footer,.list-group-item,.
 html[data-theme="light"] :is(.form-control,.form-select,input,select,textarea) { color: var(--pl-text); border-color: var(--pl-border); background-color: var(--pl-input); }
 html[data-theme="light"] :is(.btn-secondary,.button-secondary,.btn-saas.btn-secondary,.landing-button-outline,.about-link-button-dark) { color: var(--pl-text); border-color: var(--pl-border); background-color: var(--pl-surface-soft); }
 html[data-theme="light"] :is(.btn-secondary:hover,.button-secondary:hover,.btn-saas.btn-secondary:hover,.landing-button-outline:hover,.about-link-button-dark:hover) { background-color: var(--pl-row-hover); }
+html[data-theme="light"] .about-hero .about-link-button {
+  color: #FFFFFF !important;
+  border-color: var(--pl-accent) !important;
+  background-color: var(--pl-accent) !important;
+}
+html[data-theme="light"] .about-hero .about-link-button:hover {
+  color: #FFFFFF !important;
+  border-color: var(--pl-accent-strong) !important;
+  background-color: var(--pl-accent-strong) !important;
+}
 html[data-theme="light"] :is(.btn-primary,.btn-success,.button-primary,.btn-saas.btn-primary,.landing-button-primary) { color: #FFFFFF; border-color: var(--pl-accent); background-color: var(--pl-accent); }
 html[data-theme="light"] :is(.btn-primary:hover,.btn-success:hover,.button-primary:hover,.btn-saas.btn-primary:hover,.landing-button-primary:hover) { color: #FFFFFF; border-color: var(--pl-accent-strong); background-color: var(--pl-accent-strong); }
 html[data-theme="light"] :is(.table,.table > :not(caption) > *) { --bs-table-bg: var(--pl-surface); --bs-table-color: var(--pl-text); --bs-table-border-color: var(--pl-border); --bs-table-striped-bg: var(--pl-row-alt); --bs-table-hover-bg: var(--pl-row-hover); }
@@ -502,6 +512,20 @@ html[data-theme] body :is(.btn-primary,.btn-success,.button-primary,.btn-saas.bt
   color: var(--color-button-text) !important;
   border-color: var(--color-primary-hover) !important;
   background-color: var(--color-primary-hover) !important;
+}
+/* About hero primary CTA button across all themes */
+html[data-theme] body.about-page .about-hero .about-link-button {
+  color: var(--color-button-text) !important;
+  border-color: var(--color-primary) !important;
+  background-color: var(--color-primary) !important;
+  box-shadow: 0 4px 14px var(--color-shadow);
+}
+html[data-theme] body.about-page .about-hero .about-link-button:hover {
+  color: var(--color-button-text) !important;
+  border-color: var(--color-primary-hover) !important;
+  background-color: var(--color-primary-hover) !important;
+  box-shadow: 0 8px 22px var(--color-shadow);
+  transform: translateY(-2px);
 }
 html[data-theme] body :is(.site-footer,.about-closing,.about-large-quote,.about-partners,.landing-impact,.landing-ai,.landing-final-cta,.landing-sustainability .sustainability-panel,.pl-section-forest,.pl-card-featured,.about-ai,.purpose-vision,.feature-editorial-forest,.paperloop-admin-hero,.paperloop-admin-transaction-card) {
   color: var(--pl-footer-text) !important;
@@ -680,6 +704,38 @@ html[data-theme] body.about-page .purpose-vision {
   background-color: var(--pl-footer-bg) !important;
   background-image: none !important;
   border-color: var(--pl-footer-bg) !important;
+}
+/* Ensure About purpose cards remain crisp with minimal smooth hover matching sign-in / nav-cta */
+html[data-theme] body.about-page .purpose-card {
+  transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+html[data-theme] body.about-page .purpose-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px var(--color-shadow);
+}
+html[data-theme] body.about-page .purpose-card:not(.purpose-vision) {
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-card-bg) !important;
+  border-color: var(--color-border) !important;
+}
+html[data-theme] body.about-page .purpose-card:not(.purpose-vision):hover {
+  color: var(--color-text-primary) !important;
+  background-color: var(--color-card-hover) !important;
+  border-color: var(--color-border) !important;
+}
+html[data-theme] body.about-page .purpose-card:not(.purpose-vision) :is(h3,p,span,svg) {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html[data-theme] body.about-page .purpose-vision:hover {
+  color: var(--pl-footer-text) !important;
+  background-color: var(--pl-footer-bg) !important;
+  border-color: var(--pl-footer-bg) !important;
+}
+html[data-theme] body.about-page .purpose-vision :is(h3,p,span,svg) {
+  color: var(--pl-footer-text) !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 html[data-theme] body :is(.feature-editorial-forest .feature-watermark,.about-page .purpose-vision .purpose-watermark) {
   color: rgb(240 248 241 / .045) !important;
@@ -952,6 +1008,93 @@ html[data-theme] body.landing-page .site-header nav[data-section-active] a[aria-
 html[data-theme] body.landing-page .site-header nav a.is-section-current::after { transform: scaleX(0); }
 html[data-theme] body.landing-page .site-header nav a.is-section-current:hover::after { transform: scaleX(1); }
 
+/* Sign-in surfaces follow the active theme; the form itself stays unboxed. */
+html[data-theme] body.signin-body .signin-page {
+  border-color: var(--pl-border);
+  background: var(--pl-bg);
+}
+html[data-theme] body.signin-body .signin-main {
+  background: linear-gradient(145deg, var(--pl-bg), var(--pl-surface-soft));
+}
+html[data-theme] body.signin-body .signin-main::before {
+  background: radial-gradient(ellipse at 25% 38%, color-mix(in srgb, var(--pl-accent) 10%, transparent), transparent 34%),
+              radial-gradient(ellipse at 79% 72%, color-mix(in srgb, var(--pl-accent) 8%, transparent), transparent 32%);
+}
+html[data-theme] body.signin-body .signin-card {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+html[data-theme] body.signin-body .signin-main > .signin-card {
+  background: transparent !important;
+}
+html[data-theme] body.signin-body .signin-card h2,
+html[data-theme] body.signin-body .signin-field label { color: var(--color-heading) !important; }
+html[data-theme] body.signin-body .signin-eyebrow { color: var(--pl-accent); }
+html[data-theme] body.signin-body .signin-subtitle,
+html[data-theme] body.signin-body .signin-assurance,
+html[data-theme] body.signin-body .signin-copyright { color: var(--pl-text-muted); }
+html[data-theme] body.signin-body .input-wrap .field-icon { color: var(--pl-text-muted); }
+html[data-theme] body.signin-body .signin-field .form-control {
+  color: var(--pl-text);
+  border-color: var(--pl-border);
+  background: var(--pl-input);
+}
+html[data-theme] body.signin-body .signin-field .form-control::placeholder { color: var(--pl-text-muted); opacity: .82; }
+html[data-theme] body.signin-body .signin-field .form-control:focus {
+  border-color: var(--pl-accent);
+  background: var(--pl-input);
+  box-shadow: 0 0 0 4px var(--color-focus-ring);
+}
+html[data-theme] body.signin-body .signin-forgot-link {
+  flex: 0 0 auto;
+  color: var(--pl-accent);
+  font-size: .78rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+html[data-theme] body.signin-body .signin-forgot-link:hover { color: var(--color-link-hover); text-decoration: underline !important; }
+html[data-theme] body.signin-body .signin-divider { color: var(--pl-text-muted); font-size: .86rem; font-weight: 700; }
+html[data-theme] body.signin-body .signin-divider::before,
+html[data-theme] body.signin-body .signin-divider::after { background: var(--pl-border); }
+html[data-theme] body.signin-body .create-account-link {
+  color: var(--pl-accent);
+  border-color: var(--pl-border);
+  background: var(--pl-surface);
+}
+html[data-theme] body.signin-body .create-account-link:hover {
+  color: var(--color-link-hover);
+  border-color: var(--pl-accent);
+  background: var(--pl-surface-soft);
+}
+html[data-theme] body.signin-body :is(.signin-submit,.create-account-link):focus-visible { outline-color: var(--color-focus-ring); }
+html[data-theme] body.signin-body .signin-submit {
+  color: var(--color-button-text);
+  border-color: var(--pl-accent);
+  background: var(--pl-accent);
+}
+html[data-theme] body.signin-body .signin-submit:hover { background: var(--color-primary-hover); }
+html[data-theme] body.signin-body .signin-assurance svg { color: var(--pl-accent); }
+html[data-theme] body.signin-body .signin-main { color: var(--pl-text); }
+
+@media (max-width: 760px) {
+  html[data-theme] body.signin-body .signin-main {
+    border-color: var(--pl-border);
+    background: linear-gradient(145deg, var(--pl-bg), var(--pl-surface-soft));
+  }
+}
+@media (max-width: 420px) {
+  html[data-theme] body.signin-body .signin-forgot-link { font-size: .72rem; }
+}
+
+/* The sign-in form sits directly on the page background, without a pale panel. */
+html[data-theme] body.signin-body .signin-main {
+  background: transparent !important;
+}
+html[data-theme] body.signin-body .signin-main::before,
+html[data-theme] body.signin-body .signin-main::after {
+  display: none !important;
+  content: none !important;
+}
 /* ==========================================================================
    SHARED SHELL & WORKSPACE HIGH-CONTRAST TOKENS
    ========================================================================== */
