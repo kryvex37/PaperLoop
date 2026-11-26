@@ -80,4 +80,9 @@ urlpatterns = [
     path("transactions/<int:transaction_id>/record/", views.digital_record_view, name="digital_record"),
     path("about/", views.about_view, name="about"),
     path("landing/", views.landing_view, name="landing"),
+    path("api/locations/divisions/", views.api_location_divisions, name="api_location_divisions"),
+    path("api/locations/districts/<str:division>/", views.api_location_districts, name="api_location_districts"),
+    path("api/locations/upazilas/<str:district>/", views.api_location_upazilas, name="api_location_upazilas"),
+    path("api/locations/search/", views.api_location_search, name="api_location_search"),
+    path("api/locations/reverse/", views.api_location_reverse, name="api_location_reverse"),
 ]

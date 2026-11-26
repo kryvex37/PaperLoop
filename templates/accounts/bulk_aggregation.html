@@ -72,31 +72,31 @@
             <!-- 4 Metrics Cards -->
             <div class="row g-2 mb-4 text-center">
               <div class="col-6 col-md-3">
-                <div class="border rounded-2 p-3 bg-white h-100">
+                <div class="border rounded-2 p-3 bg-light h-100">
                   <div class="small text-secondary fw-medium">Truck Utilization</div>
                   <div class="fs-4 fw-bold text-primary mt-1">{{ bundle.truck_capacity_utilization_pct|floatformat:0 }}%</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Capacity utilized</div>
+                  <div class="text-secondary" style="font-size: 0.75rem;">Capacity utilized</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
-                <div class="border rounded-2 p-3 bg-white h-100">
+                <div class="border rounded-2 p-3 bg-light h-100">
                   <div class="small text-secondary fw-medium">Distance saved</div>
                   <div class="fs-4 fw-bold text-success mt-1">{{ bundle.distance_savings_km }} km</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Vs. independent trips</div>
+                  <div class="text-secondary" style="font-size: 0.75rem;">Vs. independent trips</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
-                <div class="border rounded-2 p-3 bg-white h-100">
+                <div class="border rounded-2 p-3 bg-light h-100">
                   <div class="small text-secondary fw-medium">Transport Cost / kg</div>
-                  <div class="fs-4 fw-bold text-dark mt-1">{{ bundle.estimated_transport_cost_per_kg }}</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Estimated unit logistics</div>
+                  <div class="fs-4 fw-bold mt-1">{{ bundle.estimated_transport_cost_per_kg }}</div>
+                  <div class="text-secondary" style="font-size: 0.75rem;">Estimated unit logistics</div>
                 </div>
               </div>
               <div class="col-6 col-md-3">
-                <div class="border rounded-2 p-3 bg-white h-100">
+                <div class="border rounded-2 p-3 bg-light h-100">
                   <div class="small text-secondary fw-medium">Optimization Score</div>
                   <div class="fs-4 fw-bold text-info mt-1">{{ bundle.score }}</div>
-                  <div class="text-muted" style="font-size: 0.75rem;">Cooperative efficiency</div>
+                  <div class="text-secondary" style="font-size: 0.75rem;">Cooperative efficiency</div>
                 </div>
               </div>
             </div>

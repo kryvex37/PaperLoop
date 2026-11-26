@@ -97,7 +97,7 @@
         <div class="row g-2">
           {% for item in listings %}
             {% if forloop.counter <= 5 %}
-              <div class="col-12 col-md-6 col-xl-4"><div class="p-3 rounded-3 border bg-white h-100 d-flex justify-content-between align-items-start gap-3">
+              <div class="col-12 col-md-6 col-xl-4"><div class="p-3 rounded-3 border bg-light h-100 d-flex justify-content-between align-items-start gap-3">
                 <div><div class="fw-semibold">{{ item.get_paper_type_display }} · {{ item.quantity_kg }} kg</div><div class="small text-secondary">{{ item.created_at|date:"M j, Y" }} · {{ item.pickup_city|default:"Location pending" }}</div></div>
                 <span class="status-pill {% if item.status == 'available' %}status-pill-success{% elif item.status == 'reserved' %}status-pill-info{% else %}status-pill-neutral{% endif %}">{{ item.get_status_display }}</span>
               </div></div>

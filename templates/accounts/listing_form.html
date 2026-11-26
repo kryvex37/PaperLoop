@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load static %}
 {% block title %}{{ page_title }} · PaperLoop{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="{% static 'css/bd-location.css' %}?v=1">
+{% endblock %}
 
 {% block topbar_title %}{{ page_title }}{% endblock %}
 {% block body_class %}institution-body{% endblock %}
@@ -60,22 +64,65 @@
             <fieldset class="mb-4 pb-3 border-bottom">
               <div class="d-flex align-items-center gap-2 mb-3">
                 <span class="badge-step active">2</span>
-                <legend class="h5 fw-bold text-dark mb-0">Campus Location</legend>
+                <legend class="h5 fw-bold text-dark mb-0">Campus Location <span class="text-danger">*</span></legend>
               </div>
-              <div class="row g-3">
-                {% for field in form %}
-                  {% if field.name == "pickup_address" or field.name == "pickup_city" or field.name == "pickup_country" %}
-                    <div class="{% if field.name == 'pickup_address' %}col-12{% else %}col-12 col-md-6{% endif %}">
-                      <label class="form-label fw-bold small text-dark" for="{{ field.id_for_label }}">
-                        {{ field.label }}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}
-                      </label>
-                      {{ field }}
-                      {% if field.help_text %}<div class="form-text text-muted small mt-1">{{ field.help_text }}</div>{% endif %}
-                      {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
-                    </div>
-                  {% endif %}
-                {% endfor %}
+              <div class="d-none">
+                {{ form.pickup_address }}
+                {{ form.pickup_city }}
+                {{ form.pickup_country }}
               </div>
+              <div class="bd-loc-panel mb-2"
+                   data-bd-location-picker
+                   data-mode="listing"
+                   data-address-id="{{ form.pickup_address.id_for_label }}"
+                   data-city-id="{{ form.pickup_city.id_for_label }}"
+                   data-country-id="{{ form.pickup_country.id_for_label }}"
+                   data-api-divisions="{% url 'accounts:api_location_divisions' %}"
+                   data-api-districts="/accounts/api/locations/districts/__DIV__/"
+                   data-api-upazilas="/accounts/api/locations/upazilas/__DIST__/"
+                   data-api-search="{% url 'accounts:api_location_search' %}"
+                   data-api-reverse="{% url 'accounts:api_location_reverse' %}">
+                <div class="bd-loc-panel-header">
+                  <span class="bd-loc-panel-title">Bangladesh Campus &amp; Street Finder</span>
+                  <span class="bd-coord-badge" data-bd-coord-readout>Click map to pin</span>
+                </div>
+                <div class="bd-autocomplete-wrap mb-3">
+                  <label class="bd-loc-label" for="listing-bd-search">Search Exact Campus / Building / Road</label>
+                  <input id="listing-bd-search" type="search" class="form-control" placeholder="e.g. Dhaka University, BUET, North South University, Dhanmondi 27…" autocomplete="off" data-bd-search>
+                  <div class="bd-autocomplete-results" data-bd-results></div>
+                </div>
+                <div class="row g-2 mb-3">
+                  <div class="col-12 col-md-4">
+                    <label class="bd-loc-label" for="listing-bd-division">Division <span class="text-danger">*</span></label>
+                    <select id="listing-bd-division" class="form-select" data-bd-division required>
+                      <option value="">Select Division</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="bd-loc-label" for="listing-bd-district">District <span class="text-danger">*</span></label>
+                    <select id="listing-bd-district" class="form-select" data-bd-district disabled>
+                      <option value="">Select District</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="bd-loc-label" for="listing-bd-upazila">Upazila / Thana</label>
+                    <select id="listing-bd-upazila" class="form-select" data-bd-upazila disabled>
+                      <option value="">Select Upazila / Thana</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="bd-map-box bd-map-box--compact mb-3" data-bd-map></div>
+                <div class="bd-location-summary is-empty" data-bd-summary>
+                  <div class="bd-location-summary-title">Selected Location Summary *</div>
+                  <div class="bd-loc-hint">No location selected yet. Search above, pick Division → District → Upazila, or click the map pin.</div>
+                </div>
+                <div class="bd-loc-error-banner" role="alert" data-bd-error></div>
+              </div>
+              {% for field in form %}
+                {% if field.name == "pickup_address" or field.name == "pickup_city" or field.name == "pickup_country" %}
+                  {% for error in field.errors %}<div class="text-danger small mt-1">{{ field.label }}: {{ error }}</div>{% endfor %}
+                {% endif %}
+              {% endfor %}
             </fieldset>
 
             <!-- SECTION 3: Schedule & Verification Photo -->
@@ -141,4 +188,6 @@
     </div>
   </div>
 </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+<script src="{% static 'js/bd-location-picker.js' %}?v=1" defer></script>
 {% endblock %}

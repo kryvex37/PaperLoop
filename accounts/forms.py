@@ -115,9 +115,9 @@ class RecyclingProfileForm(forms.ModelForm):
     )
     service_area = forms.CharField(
         widget=forms.Textarea(attrs={"rows": 2}),
-        required=False,
+        required=True,
         label="Service area / operational locations",
-        help_text="Specify cities, towns, or districts where you provide paper pickup.",
+        help_text="Add at least one operational area (Division → District → Upazila) where you provide paper pickup.",
     )
     maximum_capacity = forms.DecimalField(
         min_value=0,
@@ -141,10 +141,20 @@ class RecyclingProfileForm(forms.ModelForm):
         label="Accepting collection requests",
         help_text="Uncheck to pause incoming collection requests.",
     )
-    latitude = forms.FloatField(required=False, min_value=-90, max_value=90,
-                                 help_text="Optional decimal latitude for accurate pickup matching.")
-    longitude = forms.FloatField(required=False, min_value=-180, max_value=180,
-                                 help_text="Optional decimal longitude for accurate pickup matching.")
+    latitude = forms.FloatField(
+        required=True,
+        min_value=-90,
+        max_value=90,
+        widget=forms.NumberInput(attrs={"step": "0.000001", "placeholder": "e.g. 23.810300", "required": "required"}),
+        help_text="Required decimal latitude set via search or map pin.",
+    )
+    longitude = forms.FloatField(
+        required=True,
+        min_value=-180,
+        max_value=180,
+        widget=forms.NumberInput(attrs={"step": "0.000001", "placeholder": "e.g. 90.412500", "required": "required"}),
+        help_text="Required decimal longitude set via search or map pin.",
+    )
 
     class Meta:
         model = RecyclingProfile
@@ -204,6 +214,13 @@ class RecyclingProfileForm(forms.ModelForm):
             self.add_error("current_allocated_load", "Allocated load cannot exceed maximum capacity.")
         if not (cleaned.get("organization_name") or getattr(getattr(self.instance, "user", None), "organization_name", "")).strip():
             self.add_error("organization_name", "Enter your company or organization name.")
+        service_area = (cleaned.get("service_area") or "").strip()
+        if not service_area:
+            self.add_error("service_area", "Add at least one operational service area using the Division → District → Upazila selector.")
+        if cleaned.get("latitude") is None:
+            self.add_error("latitude", "Set your pickup hub latitude using the search bar or interactive map pin.")
+        if cleaned.get("longitude") is None:
+            self.add_error("longitude", "Set your pickup hub longitude using the search bar or interactive map pin.")
         return cleaned
 
     def save(self, commit=True):

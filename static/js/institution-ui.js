@@ -140,26 +140,59 @@
     element.textContent = new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 }).format(totalWeight);
   });
 
+  // Mobile Navigation and Workspace Sidebar Drawer
+  const sidebarBackdrop = document.createElement("div");
+  sidebarBackdrop.className = "sidebar-backdrop";
+  document.body.appendChild(sidebarBackdrop);
+
+  const workspaceSidebar = document.querySelector(".institution-sidebar, .recycler-sidebar");
+
+  const closeSidebarDrawer = () => {
+    if (workspaceSidebar) workspaceSidebar.classList.remove("is-drawer-open");
+    sidebarBackdrop.classList.remove("is-active");
+    const toggle = document.querySelector(".mobile-nav-toggle");
+    if (toggle) toggle.setAttribute("aria-expanded", "false");
+  };
+
+  sidebarBackdrop.addEventListener("click", closeSidebarDrawer);
+
   document.querySelectorAll("[data-mobile-nav-toggle]").forEach((toggle) => {
     const navigation = document.getElementById(toggle.getAttribute("aria-controls"));
-    if (!navigation) return;
 
     const setOpen = (open) => {
       toggle.setAttribute("aria-expanded", String(open));
-      navigation.classList.toggle("is-open", open);
+      if (navigation) navigation.classList.toggle("is-open", open);
+      if (workspaceSidebar) {
+        workspaceSidebar.classList.toggle("is-drawer-open", open);
+        sidebarBackdrop.classList.toggle("is-active", open);
+      }
     };
 
     toggle.addEventListener("click", () => {
-      setOpen(toggle.getAttribute("aria-expanded") !== "true");
+      const isOpen = toggle.getAttribute("aria-expanded") === "true";
+      setOpen(!isOpen);
     });
-    navigation.addEventListener("click", (event) => {
-      if (event.target.closest("a")) setOpen(false);
-    });
+
+    if (navigation) {
+      navigation.addEventListener("click", (event) => {
+        if (event.target.closest("a")) setOpen(false);
+      });
+    }
+
+    if (workspaceSidebar) {
+      workspaceSidebar.addEventListener("click", (event) => {
+        if (event.target.closest("a")) closeSidebarDrawer();
+      });
+    }
+
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") setOpen(false);
     });
+
     window.addEventListener("resize", () => {
-      if (window.matchMedia("(min-width: 761px)").matches) setOpen(false);
+      if (window.matchMedia("(min-width: 992px)").matches) {
+        setOpen(false);
+      }
     });
   });
 
