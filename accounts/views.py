@@ -4,14 +4,15 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Exists, OuterRef, Q, Sum
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_http_methods, require_POST
+from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from PIL import Image
 
 from .decorators import partner_profile_required, role_required
+from .location_service import get_districts, get_divisions, get_upazilas, reverse_geocode, search_locations
 from .forms import (
     CollectionAcceptForm,
     CollectionCompleteForm,
@@ -779,5 +780,41 @@ def landing_view(request):
 
 def about_view(request):
     return render(request, "accounts/about.html")
+
+
+@require_GET
+def api_location_divisions(request):
+    """Return Bangladesh administrative divisions as JSON."""
+    return JsonResponse(get_divisions())
+
+
+@require_GET
+def api_location_districts(request, division):
+    """Return districts for a given Bangladesh division as JSON."""
+    return JsonResponse(get_districts(division))
+
+
+@require_GET
+def api_location_upazilas(request, district):
+    """Return upazilas/thanas for a given Bangladesh district as JSON."""
+    return JsonResponse(get_upazilas(district))
+
+
+@require_GET
+def api_location_search(request):
+    """Proxy Bangladesh street, campus, and landmark autocomplete queries."""
+    query = request.GET.get("q", "")
+    return JsonResponse(search_locations(query))
+
+
+@require_GET
+def api_location_reverse(request):
+    """Reverse geocode lat/lon coordinates to a structured Bangladesh address."""
+    lat = request.GET.get("lat")
+    lon = request.GET.get("lon")
+    data = reverse_geocode(lat, lon)
+    if data is None:
+        return JsonResponse({"error": "Valid lat and lon parameters are required."}, status=400)
+    return JsonResponse(data)
 
 

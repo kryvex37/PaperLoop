@@ -52,6 +52,8 @@ class PaperListingForm(forms.ModelForm):
             field.widget.attrs["class"] = "form-select" if isinstance(field.widget, forms.Select) else "form-control"
         self.fields["pickup_city"].required = True
         self.fields["pickup_country"].required = True
+        if not (self.instance and self.instance.pk and self.instance.pickup_country):
+            self.initial.setdefault("pickup_country", "Bangladesh")
         self.fields["category_details"].required = False
         self.fields["category_details"].help_text = "For example, describe the paper type when you select Other."
 
@@ -69,4 +71,13 @@ class PaperListingForm(forms.ModelForm):
             self.add_error("available_until", "The collection period end must be on or after its start.")
         if cleaned_data.get("paper_type") == PaperListing.PaperCategory.OTHER and not cleaned_data.get("category_details", "").strip():
             self.add_error("category_details", "Describe the paper category when you select Other.")
+
+        pickup_address = (cleaned_data.get("pickup_address") or "").strip()
+        pickup_city = (cleaned_data.get("pickup_city") or "").strip()
+        pickup_country = (cleaned_data.get("pickup_country") or "").strip() or "Bangladesh"
+        cleaned_data["pickup_country"] = pickup_country
+        if not pickup_address or not pickup_city:
+            raise ValidationError(
+                "Please select a campus or street location using the Bangladesh Location Finder (search, Division → District → Upazila, or map pin)."
+            )
         return cleaned_data
