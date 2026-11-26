@@ -284,35 +284,67 @@
     .filter(({ url }) => url.pathname === window.location.pathname && url.hash.length > 1)
     .map(({ link, url }) => ({ link, section: document.getElementById(url.hash.slice(1)) }))
     .filter(({ section }) => Boolean(section));
-  if (sectionNavigation.length && "IntersectionObserver" in window) {
-    const sectionNavigationBars = [...new Set(sectionNavigation.map(({ link }) => link.closest(".site-header nav")).filter(Boolean))];
-    const navigationObserver = new IntersectionObserver((entries) => {
-      const active = entries.filter((entry) => entry.isIntersecting)
-        .sort((first, second) => second.intersectionRatio - first.intersectionRatio)[0];
-      if (!active) {
+  if (sectionNavigation.length) {
+    const syncScrollActive = () => {
+      if (pendingSectionTarget) return;
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      if (scrollY < 120) {
+        const homeLink = navigationTargets.find(({ url }) =>
+          url.origin === window.location.origin && url.pathname === window.location.pathname && !url.hash)?.link;
+        if (homeLink) setActiveNavigation(homeLink, "page");
         return;
       }
-      if (pendingSectionTarget && active.target.id !== pendingSectionTarget) return;
-      if (active.target.id === pendingSectionTarget) {
+
+      // Check if user has scrolled near bottom of page (where Contact is located)
+      const windowHeight = window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+      const isAtBottom = (windowHeight + scrollY) >= (docHeight - 120);
+
+      // Choose focal point: if at bottom of page, anchor to bottom; otherwise use 30% from viewport top (below header)
+      const focalLine = isAtBottom ? (windowHeight - 80) : Math.max(100, windowHeight * 0.3);
+
+      // Find section enclosing the focal line
+      let matched = sectionNavigation.find(({ section }) => {
+        const rect = section.getBoundingClientRect();
+        return rect.top <= focalLine && rect.bottom >= focalLine;
+      });
+
+      // If no section directly encloses the focal line, pick section closest to focal line
+      if (!matched) {
+        const sorted = [...sectionNavigation].sort((a, b) => {
+          const rectA = a.section.getBoundingClientRect();
+          const rectB = b.section.getBoundingClientRect();
+          const distA = Math.min(Math.abs(rectA.top - focalLine), Math.abs(rectA.bottom - focalLine));
+          const distB = Math.min(Math.abs(rectB.top - focalLine), Math.abs(rectB.bottom - focalLine));
+          return distA - distB;
+        });
+        matched = sorted[0];
+      }
+
+      if (matched) {
+        setActiveNavigation(matched.link, "location");
+      }
+    };
+
+    let scrollNavThrottle = 0;
+    window.addEventListener("scroll", () => {
+      if (scrollNavThrottle) return;
+      scrollNavThrottle = window.requestAnimationFrame(() => {
+        scrollNavThrottle = 0;
+        syncScrollActive();
+      });
+    }, { passive: true });
+
+    window.addEventListener("scrollend", () => {
+      if (pendingSectionTarget) {
         pendingSectionTarget = null;
         window.clearTimeout(pendingSectionTimer);
       }
-      const activeSectionLink = sectionNavigation.find(({ section }) => section === active.target)?.link;
-      setActiveNavigation(activeSectionLink, "location");
-    }, { threshold: [0.15, 0.35, 0.6], rootMargin: "-15% 0px -65% 0px" });
-    sectionNavigation.forEach(({ section }) => navigationObserver.observe(section));
-
-    window.addEventListener("scrollend", () => {
-      if (!pendingSectionTarget) return;
-      pendingSectionTarget = null;
-      window.clearTimeout(pendingSectionTimer);
-      const marker = window.innerHeight * 0.25;
-      const visible = sectionNavigation
-        .map(({ link, section }) => ({ link, section, rect: section.getBoundingClientRect() }))
-        .filter(({ rect }) => rect.top <= marker && rect.bottom >= marker)
-        .sort((first, second) => Math.abs(first.rect.top - marker) - Math.abs(second.rect.top - marker))[0];
-      if (visible) setActiveNavigation(visible.link, "location");
+      syncScrollActive();
     });
+
+    // Run initial check
+    syncScrollActive();
   }
 
   document.addEventListener("shown.bs.tab", (event) => {

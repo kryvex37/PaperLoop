@@ -5,7 +5,7 @@
 
 {% block content %}
 <div class="landing-container">
-  <section class="landing-hero paperloop-shape-surface" aria-labelledby="landing-title">
+  <section class="landing-hero paperloop-shape-surface" id="home" aria-labelledby="landing-title">
     <div class="landing-wrap landing-hero-grid">
       <div class="landing-hero-copy" data-reveal>
         <span class="landing-eyebrow"><span class="eyebrow-spark" aria-hidden="true"></span> A smarter paper loop for education</span>
@@ -133,6 +133,26 @@
     </div>
   </section>
 
+  <section class="landing-process landing-section" id="how-it-works" aria-labelledby="process-title">
+    <div class="landing-wrap">
+      <div class="process-intro" data-reveal><span class="landing-eyebrow">Three steps, one better loop</span><h2 id="process-title">From surplus to next use.</h2><p>A straightforward process makes paper recovery easier to organize and verify.</p></div>
+      <div class="process-track">
+        <article class="process-step" data-reveal>
+          <span class="process-step-no">01</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M23 4H11a3 3 0 0 0-3 3v26a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V13L23 4Z"/><path d="M23 4v9h9M14 21h14M14 27h11"/></svg></div>
+          <h3>List paper waste</h3><p>Add paper type, quantity, pickup details and availability to a listing.</p>
+        </article>
+        <article class="process-step" data-reveal style="--reveal-delay: 100ms">
+          <span class="process-step-no">02</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="15"/><path d="m20 10 2.8 7.2L30 20l-7.2 2.8L20 30l-2.8-7.2L10 20l7.2-2.8L20 10Z"/></svg></div>
+          <h3>Find suitable recyclers</h3><p>Review partners matched around material fit, service area and capacity.</p>
+        </article>
+        <article class="process-step" data-reveal style="--reveal-delay: 200ms">
+          <span class="process-step-no">03</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M5 8h30v7H5zM9 15v20h22V15M15 22h10M15 28h10"/></svg></div>
+          <h3>Complete collection</h3><p>Coordinate pickup, confirm the transfer and keep the transaction record.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
   <section class="landing-features landing-section" id="features" aria-labelledby="features-title">
     <div class="landing-wrap">
       <div class="section-heading section-heading-split" data-reveal>
@@ -171,26 +191,6 @@
           <p>Keep a digital record of completed transfers and the collection details connected to each one.</p>
           <a href="{% url 'accounts:login' %}" class="feature-link">View your records <span aria-hidden="true">↗</span></a>
           <span class="feature-watermark" aria-hidden="true">04</span>
-        </article>
-      </div>
-    </div>
-  </section>
-
-  <section class="landing-process landing-section" id="how-it-works" aria-labelledby="process-title">
-    <div class="landing-wrap">
-      <div class="process-intro" data-reveal><span class="landing-eyebrow">Three steps, one better loop</span><h2 id="process-title">From surplus to next use.</h2><p>A straightforward process makes paper recovery easier to organize and verify.</p></div>
-      <div class="process-track">
-        <article class="process-step" data-reveal>
-          <span class="process-step-no">01</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M23 4H11a3 3 0 0 0-3 3v26a3 3 0 0 0 3 3h18a3 3 0 0 0 3-3V13L23 4Z"/><path d="M23 4v9h9M14 21h14M14 27h11"/></svg></div>
-          <h3>List paper waste</h3><p>Add paper type, quantity, pickup details and availability to a listing.</p>
-        </article>
-        <article class="process-step" data-reveal style="--reveal-delay: 100ms">
-          <span class="process-step-no">02</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><circle cx="20" cy="20" r="15"/><path d="m20 10 2.8 7.2L30 20l-7.2 2.8L20 30l-2.8-7.2L10 20l7.2-2.8L20 10Z"/></svg></div>
-          <h3>Find suitable recyclers</h3><p>Review partners matched around material fit, service area and capacity.</p>
-        </article>
-        <article class="process-step" data-reveal style="--reveal-delay: 200ms">
-          <span class="process-step-no">03</span><div class="process-step-icon"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M5 8h30v7H5zM9 15v20h22V15M15 22h10M15 28h10"/></svg></div>
-          <h3>Complete collection</h3><p>Coordinate pickup, confirm the transfer and keep the transaction record.</p>
         </article>
       </div>
     </div>
